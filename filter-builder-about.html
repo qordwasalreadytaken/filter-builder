@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>About - FilterPhoenix Filter Builder</title>
+    <title>About - PoD Filter Builder</title>
     <style>
         * {
             margin: 0;
@@ -140,11 +140,11 @@
 </head>
 <body>
     <div class="container">
-        <h1>FilterPhoenix Filter Builder</h1>
+        <h1>PoD Filter Builder</h1>
         <p class="subtitle">Visual Loot Filter Builder for Path of Diablo</p>
 
-        <h2>What is FilterPhoenix Filter Builder?</h2>
-        <p>FilterPhoenix Filter Builder is a web-based visual editor for creating custom loot filters for Path of Diablo. It provides an intuitive interface to customize which items you see in-game, with support for colors, notifications, filter levels, and advanced filtering options.</p>
+        <h2>What is PoD Filter Builder?</h2>
+        <p>PoD Filter Builder is a web-based visual editor for creating custom loot filters for Path of Diablo. It provides an intuitive interface to customize which items you see in-game, with support for colors, notifications, filter levels, and advanced filtering options.</p>
 
         <h2>Key Features</h2>
         
@@ -155,10 +155,20 @@
                 <li><strong>Set Items:</strong> High-level, mid-level, and low-level set pieces</li>
                 <li><strong>Magic Items:</strong> Jewelry, charms, and crafting bases</li>
                 <li><strong>Rare Items:</strong> Jewelry, class-specific items, and elite bases</li>
-                <li><strong>NMAG (Non-Magic) Items:</strong> Runeword bases for all weapon and armor types</li>
+                <li><strong>NMAG (Non-Magic) Items:</strong> Runeword bases for all weapon and armor types, now split into three groups: commonly used bases (based on observed usage), all other bases, and items that can spawn with staffmods</li>
                 <li><strong>Utility:</strong> Keys, essences, tokens, organs, and special items</li>
                 <li><strong>Runes:</strong> All runes from El to Zod</li>
                 <li><strong>Gems & Misc:</strong> Gems, skulls, maps, and PoD items</li>
+            </ul>
+        </div>
+
+        <div class="feature-box">
+            <h3>🆕 New Features</h3>
+            <ul>
+                <li><strong>+Skills Highlighting:</strong> Add and display +skills for items that can roll them</li>
+                <li><strong>Socket Count Visualization:</strong> View and color socket count for items, making it easier to spot ideal runeword bases</li>
+                <li><strong>NMAG Item Grouping:</strong> NMAG items are now split into three groups: item bases commonly seen in use, all other bases, and items that can spawn with staffmods</li>
+                <li><strong>Staffmods/Automods:</strong> +Skills can now be added to the display for NMAG items that can roll them</li>
             </ul>
         </div>
 
@@ -204,7 +214,7 @@
 
         <h2>Installation</h2>
         <ol>
-            <li>Generate your filter using FilterPhoenix Filter Builder</li>
+            <li>Generate your filter using PoD Filter Builder</li>
             <li>Copy or download the <code>FPCustom.filter</code> file</li>
             <li>Place it in your Filter folder in the Path of Diablo game folder (where PoD Launcher is located)</li>
             <li>Launch the game and pick your filter from the H menu</li>
@@ -226,9 +236,28 @@
             <li><strong>Test Incrementally:</strong> Make changes, test in-game, then iterate</li>
             <li><strong>Color Coding:</strong> Use consistent color schemes (e.g., orange for valuable, white for bases)</li>
             <li><strong>NMAG Filters:</strong> Be specific with socket counts for runeword bases (e.g., 4 sockets for Spirit)</li>
+            <li><strong>+Skills:</strong> Use the +skills feature to highlight items with valuable skill bonuses</li>
         </ul>
 
         <h2>Support & Resources</h2>
+                <h2>Known Issues</h2>
+                <div class="warning-box">
+                    <ul>
+                        <li>Not all filter functions are supported by import yet</li>
+                    </ul>
+                </div>
+
+                <h2>To-Do</h2>
+                <ul>
+                    <li>Improved handling of identified items</li>
+                    <li>Better categorizing of magic and rare items</li>
+                    <li>Add non class-specific skills (Summon Skills, Fire Skills, Elemental & Poison skills, etc.)</li>
+                    <li>Expand magic/rare/creafted items to include +skills</li>
+                    <li>Allow user created styles and textmacros so it's easier to apply a consistent look to multiple items</li>
+                        <ul>
+                            <li>This is currently doable via custom name, but it's not intuitive</li>
+                        </ul>
+                </ul>
         <p>For bug reports, feature requests, or questions:</p>
         <ul>
             <li>Yell at Qord on Discord</li>
@@ -236,7 +265,7 @@
         </ul>
 
         <h2>Credits</h2>
-        <p>FilterPhoenix Filter Builder is an open-source project created for the Path of Diablo community. Special thanks to all contributors and testers who helped make this tool possible.</p>
+        <p>PoD Filter Builder is an open-source project created for the Path of Diablo community. Special thanks to all contributors and testers who helped make this tool possible.</p>
 
         <div class="center">
             <a href="filter-builder.html" class="back-btn">← Back to Filter Builder</a>
