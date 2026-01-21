@@ -5,7 +5,11 @@
 const classSkills = {
     general: {
         universal: [
-            { name: "Elemental & Poison Skills", id: null, stat: 495 }
+            { name: "Cold Skills", id: null, stat: 437 },
+            { name: "Elemental & Poison Skills", id: null, stat: 495 },
+            { name: "Fire Skills", id: null, stat: 436 }
+//            { name: "Lightning Skills", id: null, stat: ??? }
+//            { name: "Summon Skills", id: null, stat: ??? }
             // More universal skills can be added here
         ]
     },

@@ -3552,6 +3552,7 @@
             });
             
             updateGlobalSkillState();
+            generateFilter();
         }
 
         function deselectAllSkills() {
@@ -3561,6 +3562,7 @@
             });
             
             updateGlobalSkillState();
+            generateFilter();
         }
 
         // Presets
@@ -5882,12 +5884,19 @@
                 for (const [treeKey, skills] of Object.entries(classSkillsData)) {
                     // Skip if allowedTrees is specified and this tree is not in the list
                     if (allowedTrees && !allowedTrees.includes(treeKey)) continue;
-                    
+
                     const treeSkillCode = treeSkillCodes[`${classKey}-${treeKey}`];
                     if (treeSkillCode && globalSettings.selectedSkillGroups.includes(treeSkillCode)) {
                         const treeName = treeNames[treeKey];
                         const className = classNames[classKey];
-                        lines += `\tItemDisplay[${treeSkillCode}>0]: %NAME% %LIGHT_GRAY%+${className} ${treeName} Skills%CONTINUE%\n`;
+                        // Only split for Amazon Bow & Crossbow and Javelin & Spear
+                        if (classKey === 'amazon' && (treeKey === 'bow' || treeKey === 'javelin')) {
+                            lines += `\tItemDisplay[${treeSkillCode}=3]: %NAME% %LIGHT_GRAY%+3 ${className} ${treeName} Skills%CONTINUE%\n`;
+                            lines += `\tItemDisplay[${treeSkillCode}=2]: %NAME% %LIGHT_GRAY%+2 ${className} ${treeName} Skills%CONTINUE%\n`;
+                            lines += `\tItemDisplay[${treeSkillCode}=1]: %NAME% %LIGHT_GRAY%+1 ${className} ${treeName} Skills%CONTINUE%\n`;
+                        } else {
+                            lines += `\tItemDisplay[${treeSkillCode}>0]: %NAME% %LIGHT_GRAY%+${className} ${treeName} Skills%CONTINUE%\n`;
+                        }
                     }
                 }
             }
