@@ -185,7 +185,7 @@
             { name: "Executioner's Justice", code: "7gi" },
             { name: "Flamebellow", code: "7b7" },
             { name: "Fleshripper", code: "7kr" },
-            { name: "Frostwind", code: "7cs" },
+            { name: "Frostwind", code: "7ls" },
             { name: "Gargoyle's Bite", code: "7ts" },
             { name: "Ghostflame", code: "7di" },
             { name: "Gimmershred", code: "7ta" },
