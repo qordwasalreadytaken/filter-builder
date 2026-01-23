@@ -2958,7 +2958,7 @@
                     <input type="checkbox" class="item-checkbox" 
                         ${state.show ? 'checked' : ''} 
                         onchange="updateItemState('utility', '${item.code}', 'show', this.checked)">
-                    <span class="item-name">${item.name}</span>
+                    <span class="item-name">${item.name} (${item.code})</span>
                     <div class="levels-selector ${!globalSettings.enableFilterLevels ? 'disabled' : ''}">
                         <span class="levels-label">FilterLevels:</span>
                         <button class="btn-link" onclick="setAllLevels('utility', '${item.code}', true); event.preventDefault();" title="Select all levels">All</button>
@@ -3072,7 +3072,7 @@
                     <input type="checkbox" class="item-checkbox" 
                         ${state.show ? 'checked' : ''} 
                         onchange="updateItemState('gems', '${item.code}', 'show', this.checked)">
-                    <span class="item-name">${item.name}</span>
+                    <span class="item-name">${item.name} (${item.code})</span>
                     <div class="levels-selector ${!globalSettings.enableFilterLevels ? 'disabled' : ''}">
                         <span class="levels-label">FilterLevels:</span>
                         <button class="btn-link" onclick="setAllLevels('gems', '${item.code}', true); event.preventDefault();" title="Select all levels">All</button>
@@ -3127,7 +3127,7 @@
                     <input type="checkbox" class="item-checkbox" 
                         ${state.show ? 'checked' : ''} 
                         onchange="updateItemState('misc', '${item.code}', 'show', this.checked)">
-                    <span class="item-name">${item.name}</span>
+                    <span class="item-name">${item.name} (${item.code})</span>
                     <div class="levels-selector ${!globalSettings.enableFilterLevels ? 'disabled' : ''}">
                         <span class="levels-label">FilterLevels:</span>
                         <button class="btn-link" onclick="setAllLevels('misc', '${item.code}', true); event.preventDefault();" title="Select all levels">All</button>
@@ -3741,7 +3741,7 @@
                     <input type="checkbox" class="item-checkbox" 
                         ${state.show ? 'checked' : ''} 
                         onchange="updateUniqueItemState('${stateCategory}', '${key}', 'show', this.checked)">
-                    <span class="item-name">${item.name}</span>
+                    <span class="item-name">${item.name} (${item.code})</span>
                     <div class="levels-selector ${!globalSettings.enableFilterLevels ? 'disabled' : ''}">
                         <span class="levels-label">Levels:</span>
                         <button class="btn-link" onclick="setAllLevels('${stateCategory}', '${key}', true); event.preventDefault();" title="Select all levels">All</button>
@@ -3829,7 +3829,7 @@
                 row.innerHTML = `
                     <input type="checkbox" class="item-checkbox" ${state.show ? 'checked' : ''}
                         onchange="updateSetItemState('${stateCategory}', '${key}', 'show', this.checked)">
-                    <span class="item-name">${state.name}</span>
+                    <span class="item-name">${state.name}  (${item.code})</span>
                     <div class="levels-selector ${!globalSettings.enableFilterLevels ? 'disabled' : ''}">
                         <span class="levels-label">Levels:</span>
                         <button class="btn-link" onclick="setAllLevels('${stateCategory}', '${key}', true); event.preventDefault();" title="Select all levels">All</button>
@@ -3902,7 +3902,7 @@
                 row.innerHTML = `
                     <input type="checkbox" class="item-checkbox" ${state.show ? 'checked' : ''}
                         onchange="updateMagicRareItemState('${stateCategory}', '${key}', 'show', this.checked)">
-                    <span class="item-name">${state.name}</span>
+                    <span class="item-name">${state.name}  (${item.code})</span>
                     <div class="levels-selector ${!globalSettings.enableFilterLevels ? 'disabled' : ''}">
                         <span class="levels-label">Levels:</span>
                         <button class="btn-link" onclick="setAllLevels('${stateCategory}', '${key}', true); event.preventDefault();" title="Select all levels">All</button>
@@ -4022,7 +4022,7 @@
 
                 row.innerHTML = `
                     <input type="checkbox" class="item-checkbox" data-category="${stateCategory}" data-key="${key}" ${state.show ? 'checked' : ''}>
-                    <span class="item-name">${state.name}</span>
+                    <span class="item-name">${state.name}  (${item.code})</span>
                     <span style="color: #888; font-size: 11px; margin-left: 8px;">[${state.quality}]</span>
                     <div class="levels-selector ${!globalSettings.enableFilterLevels ? 'disabled' : ''}">
                         <span class="levels-label">Levels:</span>
