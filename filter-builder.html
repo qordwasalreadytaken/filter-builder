@@ -1064,6 +1064,22 @@
                             </div>
                         </div>
                     </div>
+                    <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #444;">
+                        <div style="margin-bottom: 10px; cursor: pointer; user-select: none;" onclick="toggleCommunityModulesSettings()">
+                            <span id="community-modules-settings-toggle" style="display: inline-block; transition: transform 0.2s; margin-right: 5px;">▶</span>
+                            <strong>Community Modules</strong>
+                        </div>
+                        <div id="community-modules-settings-content" style="display: none;">
+                            <p style="font-size: 12px; color: #999; margin: 0 0 10px 0;">
+                                Preset options created by community members. Pick and choose individual rules below:
+                            </p>
+                            <div id="community-modules-container">
+                                <div style="padding: 10px; background: #2a2a2a; border-radius: 4px; color: #999; text-align: center;">
+                                    Loading community modules...
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Utility Items Section -->
@@ -2265,11 +2281,125 @@
     <!-- <script src="data/item_metadata.js"></script> -->
     
     <!-- External data file with all item arrays -->
+
     <script src="data/items.js"></script>
     <script src="data/skills.js"></script>
+
+    <!-- Dynamic loader for community modules -->
+    <script>
+    // Loads community modules from index.json and each module JSON
+    async function loadCommunityModulesFromJSON() {
+        const basePath = 'data/community_modules/';
+        try {
+            const indexResp = await fetch(basePath + 'index.json');
+            if (!indexResp.ok) throw new Error('Failed to load index.json');
+            const moduleFiles = await indexResp.json();
+            const modules = {};
+            for (const file of moduleFiles) {
+                try {
+                    const modResp = await fetch(basePath + file);
+                    if (!modResp.ok) continue;
+                    const modData = await modResp.json();
+                    // Use moduleName or filename as key
+                    const modKey = modData.moduleName || file.replace(/\.json$/, '');
+                    modules[modKey] = modData.rules || [];
+                } catch (e) { /* skip broken module */ }
+            }
+            window.communityModules = modules;
+        } catch (e) {
+            window.communityModules = {};
+        }
+    }
+    // Load modules before UI
+    window.addEventListener('DOMContentLoaded', function() {
+        loadCommunityModulesFromJSON().then(() => {
+            setTimeout(loadCommunityModulesUI, 100); // UI loader already waits 500ms, but ensure order
+        });
+    });
+    </script>
+
+    <script>
+    // --- Community Modules Section Toggle ---
+    function toggleCommunityModulesSettings() {
+        const content = document.getElementById('community-modules-settings-content');
+        const toggle = document.getElementById('community-modules-settings-toggle');
+        if (content.style.display === 'none') {
+            content.style.display = 'block';
+            toggle.textContent = '▼';
+        } else {
+            content.style.display = 'none';
+            toggle.textContent = '▶';
+        }
+    }
+    </script>
     
     <script>
         // Item data arrays loaded from data/items.js
+
+        // --- Community Modules UI Logic ---
+        function loadCommunityModulesUI() {
+    const container = document.getElementById('community-modules-container');
+    container.innerHTML = '';
+    if (!window.communityModules) {
+        container.innerHTML = '<div style="padding:10px;color:#999;">No community modules found.</div>';
+        return;
+    }
+    console.log('[loadCommunityModulesUI] window.communityModules:', window.communityModules);
+    Object.entries(window.communityModules).forEach(([moduleName, rules]) => {
+        const modDiv = document.createElement('div');
+        modDiv.className = 'community-module-section';
+        modDiv.style.marginBottom = '18px';
+        modDiv.innerHTML = `<div style="font-weight:bold;color:#4fc3f7;margin-bottom:6px;">${moduleName.charAt(0).toUpperCase() + moduleName.slice(1)} Module</div>`;
+        rules.forEach(rule => {
+            const ruleId = `${moduleName}__${rule.id}`;
+            const checked = filterState.communityModules?.[moduleName]?.[rule.id] ? 'checked' : '';
+            const safeModuleName = moduleName.replace(/'/g, "\\'");
+            const safeRuleId = rule.id.replace(/'/g, "\\'");
+            const ruleDiv = document.createElement('div');
+            ruleDiv.className = 'community-module-rule';
+            ruleDiv.style.marginBottom = '6px';
+            ruleDiv.innerHTML = `
+                <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                    <input type="checkbox" ${checked} onchange="toggleCommunityModuleRule('${safeModuleName}','${safeRuleId}',this.checked)">
+                    <span style="font-size:13px;color:#fff;">${rule.label}</span>
+                    <span style="font-size:11px;color:#aaa;">by ${rule.author || moduleName}</span>
+                </label>
+                <div style="font-size:11px;color:#999;margin-left:24px;">${rule.description || ''}</div>
+            `;
+            modDiv.appendChild(ruleDiv);
+        });
+        container.appendChild(modDiv);
+    });
+        }
+
+        function toggleCommunityModuleRule(moduleName, ruleId, checked) {
+    console.log('[toggleCommunityModuleRule] called with:', { moduleName, ruleId, checked });
+    if (!filterState.communityModules) filterState.communityModules = {};
+    if (!filterState.communityModules[moduleName]) filterState.communityModules[moduleName] = {};
+    filterState.communityModules[moduleName][ruleId] = checked;
+    // Update filter output when a community module rule is toggled
+    if (!filterState.communityModules) filterState.communityModules = {};
+    if (!filterState.communityModules[moduleName]) filterState.communityModules[moduleName] = {};
+    filterState.communityModules[moduleName][ruleId] = checked;
+    console.log('[toggleCommunityModuleRule] filterState.communityModules:', filterState.communityModules);
+    generateFilter();
+    if (typeof updateOutputStats === 'function') updateOutputStats();
+
+    // Highlight the first filter line for this rule if checked
+    if (checked && window.communityModules && window.communityModules[moduleName]) {
+        const rule = window.communityModules[moduleName].find(r => r.id === ruleId);
+        if (rule && rule.filterLines && rule.filterLines.length > 0) {
+            // Try to extract the item code from the first filter line
+            const match = rule.filterLines[0].match(/ItemDisplay\[([^\]:]+)[^\]]*\]:/i);
+            if (match && match[1]) {
+                // If the code contains spaces (e.g., UNI uap), just use the whole match
+                setTimeout(() => highlightItemInOutput(match[1]), 100);
+            }
+        }
+    }
+        }
+
+        // (Removed redundant UI loader; UI is loaded after modules are loaded below)
         
         // Global settings state
         const globalSettings = {
@@ -2978,63 +3108,63 @@
         }
 
         function renderRuneItems() {
-            const container = document.getElementById('runes-items');
-            container.innerHTML = '';
-            
-            runeItems.forEach(item => {
-                const state = filterState.runes[item.code];
-                const row = document.createElement('div');
-                row.className = 'item-row';
-                
-                // Build font color options
-                const fontOptions = FONT_COLORS.map(color => 
-                    `<option value="${color}" ${state.fontColor === color ? 'selected' : ''}>${color}</option>`
-                ).join('');
-                
-                // Build filter levels checkboxes (only for named levels)
-                const levelCheckboxes = state.filterLevels
-                    .map((checked, idx) => {
-                        if (!globalSettings.levelNames[idx]) return null;
-                        return `
-                            <div class="level-checkbox-wrapper" title="${globalSettings.levelNames[idx]}">
-                                <input type="checkbox" class="level-checkbox" 
-                                    ${checked ? 'checked' : ''}
-                                    onchange="updateItemLevel('runes', '${item.code}', ${idx}, this.checked)">
-                                <span class="level-checkbox-label">${idx + 1}</span>
-                            </div>
-                        `;
-                    })
-                    .filter(cb => cb !== null)
-                    .join('');
-                
-                const isModified = isItemModified(state, 'simple');
-                // High runes (Pul+ = r21-r33) should always be shown and cannot be hidden
-                const isHighRune = item.code >= 'r21';
-                
-                row.innerHTML = `
-                    <input type="checkbox" class="item-checkbox" 
-                        ${state.show ? 'checked' : ''} 
-                        ${isHighRune ? 'disabled checked' : ''}
-                        onchange="updateItemState('runes', '${item.code}', 'show', this.checked)"
-                        ${isHighRune ? 'title="High runes cannot be hidden to prevent missing valuable drops"' : ''}>
-                    <span class="item-name ${isHighRune ? 'high-rune' : ''}">${item.name}</span>
-                    <div class="levels-selector ${!globalSettings.enableFilterLevels ? 'disabled' : ''}">
-                        <span class="levels-label">FilterLevels:</span>
-                        <button class="btn-link" onclick="setAllLevels('runes', '${item.code}', true); event.preventDefault();" title="Select all levels">All</button>
-                        <button class="btn-link" onclick="setAllLevels('runes', '${item.code}', false); event.preventDefault();" title="Deselect all levels">None</button>
-                        <div class="level-checkboxes">
-                            ${levelCheckboxes}
-                        </div>
-                    </div>
-                    <button class="settings-btn ${isModified ? 'modified' : ''}" 
-                        onclick="openItemSettings('runes', '${item.code}', \`${item.name}\`, 'simple')" 
-                        title="Configure item settings">⚙</button>
-                `;
-                container.appendChild(row);
-            });
+    const container = document.getElementById('runes-items');
+    container.innerHTML = '';
 
-            updateItemCount('runes');
-        }
+    runeItems.forEach(item => {
+        const state = filterState.runes[item.code];
+        const row = document.createElement('div');
+        row.className = 'item-row';
+
+        // Build font color options
+        const fontOptions = FONT_COLORS.map(color => 
+            `<option value="${color}" ${state.fontColor === color ? 'selected' : ''}>${color}</option>`
+        ).join('');
+
+        // Build filter levels checkboxes (only for named levels)
+        const levelCheckboxes = state.filterLevels
+            .map((checked, idx) => {
+                if (!globalSettings.levelNames[idx]) return null;
+                return `
+                    <div class="level-checkbox-wrapper" title="${globalSettings.levelNames[idx]}">
+                        <input type="checkbox" class="level-checkbox" 
+                            ${checked ? 'checked' : ''}
+                            onchange="updateItemLevel('runes', '${item.code}', ${idx}, this.checked)">
+                        <span class="level-checkbox-label">${idx + 1}</span>
+                    </div>
+                `;
+            })
+            .filter(cb => cb !== null)
+            .join('');
+
+        const isModified = isItemModified(state, 'simple');
+        // High runes (Pul+ = r21-r33) should always be shown and cannot be hidden
+        const isHighRune = item.code >= 'r21';
+
+        row.innerHTML = `
+            <input type="checkbox" class="item-checkbox" 
+                ${state.show ? 'checked' : ''} 
+                ${isHighRune ? 'disabled checked' : ''}
+                onchange="updateItemState('runes', '${item.code}', 'show', this.checked)"
+                ${isHighRune ? 'title=\"High runes cannot be hidden to prevent missing valuable drops\"' : ''}>
+            <span class="item-name ${isHighRune ? 'high-rune' : ''}">${item.name}</span>
+            <div class="levels-selector ${!globalSettings.enableFilterLevels ? 'disabled' : ''}">
+                <span class="levels-label">FilterLevels:</span>
+                <button class="btn-link" onclick="setAllLevels('runes', '${item.code}', true); event.preventDefault();" title="Select all levels">All</button>
+                <button class="btn-link" onclick="setAllLevels('runes', '${item.code}', false); event.preventDefault();" title="Deselect all levels">None</button>
+                <div class="level-checkboxes">
+                    ${levelCheckboxes}
+                </div>
+            </div>
+            <button class="settings-btn ${isModified ? 'modified' : ''}" 
+                onclick="openItemSettings('runes', '${item.code}', \`${item.name}\`, 'simple')" 
+                title="Configure item settings">⚙</button>
+        `;
+        container.appendChild(row);
+    });
+
+    updateItemCount('runes');
+}
 
         function renderGemsItems() {
             const container = document.getElementById('gems-items');
@@ -6182,6 +6312,23 @@
 //            filter += 'ItemDisplay[RW]: %NAME%\n';
 //            filter += 'ItemDisplay[ID]: %NAME%\n\n';
 
+            // --- COMMUNITY MODULES CUSTOM SECTION ---
+            let customSectionLines = '';
+            if (window.communityModules && filterState.communityModules) {
+                Object.entries(window.communityModules).forEach(([moduleName, rules]) => {
+                    rules.forEach(rule => {
+                        if (filterState.communityModules[moduleName] && filterState.communityModules[moduleName][rule.id]) {
+                            // Add each filter line from the rule
+                            rule.filterLines.forEach(line => {
+                                customSectionLines += line + '\n';
+                            });
+                        }
+                    });
+                });
+            }
+            if (customSectionLines) {
+                filter += '// === CUSTOM (COMMUNITY MODULES) ===\n\n' + customSectionLines + '\n';
+            }
 
             // Utility items
             filter += '// === UTILITY ITEMS ===\n\n';

@@ -1,0 +1,23 @@
+{
+  "moduleName": "Qords Unique Hider",
+  "rules": [
+    {
+      "id": "no-shako-for-you",
+      "label": "F your shako!",
+      "author": "Qord",
+      "description": "Hides Shakos",
+      "filterLines": [
+        "ItemDisplay[UNI uap]:"
+      ]
+    },
+    {
+      "id": "no-ammy-for-you",
+      "label": "I never find unique amulets...",
+      "author": "Qord",
+      "description": "Hides Unique Amulets",
+      "filterLines": [
+        "ItemDisplay[UNI amu]:"
+      ]
+    }
+  ]
+}

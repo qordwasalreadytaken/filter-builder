@@ -1,0 +1,23 @@
+{
+  "moduleName": "Steve's Super cool",
+  "rules": [
+    {
+      "id": "eld_rune_arrow_alert",
+      "label": "Eld Rune Craft Arrow Alert",
+      "author": "Steve",
+      "description": "Alert for ELD Rune (Craft Arrows with _2 Cold Arrow)",
+      "filterLines": [
+        "ItemDisplay[r02]:%MAPICON(29,9)% %NOTIFY(ITEM,HIGH)% %BGCOLOR(96)%%BORDER(8,109)% %SPACE% %NL% %ORANGE%%NAME% %NL% %SPACE% {%GREEN%Craft +2 Ice-Arrow: %BLUE%MAG-Arrow%WHITE% + %TAN%Eld%WHITE% + %PURPLE%Amethest%WHITE% + %TEAL%GEM}%NOTIFYSOUND(2664,HIGH)%    // Alert for ELD Rune (Craft Arrows with _2 Cold Arrow)"
+      ]
+    },
+    {
+      "id": "tir-rule",
+      "label": "Sweet, a tir!",
+      "author": "Steve",
+      "description": "Tir's of joy",
+      "filterLines": [
+        "ItemDisplay[r03]: You found a %ORANGE%%NAME% "
+      ]
+    }
+  ]
+}
