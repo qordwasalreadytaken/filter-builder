@@ -16,7 +16,8 @@
       "author": "Steve",
       "description": "Tir's of joy",
       "filterLines": [
-        "ItemDisplay[r03]: You found a %ORANGE%%NAME% "
+        "ItemDisplay[r03]: You found a %ORANGE%%NAME% ",
+        "ItemDisplay[r04]: This is a %ORANGE%%NAME% %WHITE% and not a Tir rune"
       ]
     }
   ]

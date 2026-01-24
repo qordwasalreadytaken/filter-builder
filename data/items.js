@@ -409,7 +409,7 @@
             { name: "Ironstone", code: "whm", base: "War Hammer" },
             { name: "Kinemil's Awl", code: "gis", base: "Giant Sword" },
             { name: "Knell Striker", code: "scp", base: "Scepter" },
-            { name: "Kuko Shakaku", code: "mxb", base: "Crossbow" },
+            { name: "Kuko Shakaku", code: "8lb", base: "Cedar Bow" },
             { name: "Lance of Yaggai", code: "spt", base: "Spetum" },
             { name: "Leadcrow", code: "lxb", base: "Light Crossbow" },
             { name: "Maelstrom", code: "ywn", base: "Yew Wand" },
@@ -417,7 +417,7 @@
             { name: "Rakescar", code: "wax", base: "War Axe" },
             { name: "Raven Claw", code: "lbw", base: "Long Bow" },
             { name: "Razortine", code: "tri", base: "Trident" },
-            { name: "Riphook", code: "lxb", base: "Light Crossbow" },
+            { name: "Riphook", code: "8hb", base: "Razor Bow" },
             { name: "Ripsaw", code: "flb", base: "Flamberge" },
             { name: "Rixot's Keen", code: "ssd", base: "Short Sword" },
             { name: "Rogue's Bow", code: "cbw", base: "Composite Bow" },
@@ -500,7 +500,7 @@
             { name: "Undead Crown", code: "crn", base: "Crown" },
             { name: "Venom Ward", code: "brs", base: "Breast Plate" },
             { name: "Victors Silk", code: "aar", base: "Ancient Armor" },
-            { name: "Visceratuant", code: "buc", base: "Buckler" },
+            { name: "Visceratuant", code: "xuc", base: "Defender" },
             { name: "Wall of the Eyeless", code: "bsh", base: "Bone Shield" },
             { name: "Wormskull", code: "bhm", base: "Bone Helm" },
         ];
@@ -572,7 +572,7 @@
             { name: "Hwanin's Blessing", code: "mbl", set: "Hwanin", base: "Belt" },
             { name: "Hwanin's Justice", code: "9vo", set: "Hwanin", base: "Bill" },
             // Naj's Ancient Vestige
-            { name: "Naj's Circlet", code: "ci1", set: "Naj", base: "Circlet" },
+            { name: "Naj's Circlet", code: "ci0", set: "Naj", base: "Circlet" },
             { name: "Naj's Light Plate", code: "ult", set: "Naj", base: "Hellforge Plate" },
             { name: "Naj's Puzzler", code: "6cs", set: "Naj", base: "Elder Staff" },
             // Orphan's Call
@@ -582,13 +582,13 @@
             { name: "Wilhelm's Pride", code: "ztb", set: "Orphan", base: "Battle Belt" },
             // Sander's Folly
             { name: "Sander's Paragon", code: "cap", set: "Sander", base: "Cap" },
-            { name: "Sander's Riprap", code: "hbt", set: "Sander", base: "Heavy Boots" },
+            { name: "Sander's Riprap", code: "vbt", set: "Sander", base: "Heavy Boots" },
             { name: "Sander's Taboo", code: "vgl", set: "Sander", base: "Heavy Gloves" },
             { name: "Sander's Superstition", code: "bwn", set: "Sander", base: "Bone Wand" },
             // Cow King's Leathers
             { name: "Cow King's Horns", code: "xap", set: "Cow", base: "War Hat" },
-            { name: "Cow King's Hide", code: "xtu", set: "Cow", base: "Studded Leather" },
-            { name: "Cow King's Hooves", code: "xhb", set: "Cow", base: "Heavy Boots" },
+            { name: "Cow King's Hide", code: "stu", set: "Cow", base: "Studded Leather" },
+            { name: "Cow King's Hooves", code: "vbt", set: "Cow", base: "Heavy Boots" },
             // Heaven's Brethren
             { name: "Dangoon's Teaching", code: "7ma", set: "Brethren", base: "Reinforced Mace" },
             { name: "Taebaek's Glory", code: "uts", set: "Brethren", base: "Ward" },
@@ -611,7 +611,7 @@
             { name: "Arctic Horn", code: "swb", set: "Arctic", base: "Short War Bow" },
             { name: "Arctic Furs", code: "qui", set: "Arctic", base: "Quilted Armor" },
             { name: "Arctic Binding", code: "lbl", set: "Arctic", base: "Light Belt" },
-            { name: "Arctic Mitts", code: "lgl", set: "Arctic", base: "Light Gauntlets" },
+            { name: "Arctic Mitts", code: "tgl", set: "Arctic", base: "Light Gauntlets" },
             // Berserker's Arsenal
             { name: "Berserker's Headgear", code: "hlm", set: "Berserker", base: "Helm" },
             { name: "Berserker's Hauberk", code: "spl", set: "Berserker", base: "Splint Mail" },
@@ -644,8 +644,8 @@
             { name: "Infernal Sign", code: "tbl", set: "Infernal", base: "Heavy Belt" },
             // Iratha's Finery
             { name: "Iratha's Coil", code: "crn", set: "Iratha", base: "Crown" },
-            { name: "Iratha's Cuff", code: "lgl", set: "Iratha", base: "Light Gauntlets" },
-            { name: "Iratha's Cord", code: "lbl", set: "Iratha", base: "Light Belt" },
+            { name: "Iratha's Cuff", code: "tgl", set: "Iratha", base: "Light Gauntlets" },
+            { name: "Iratha's Cord", code: "tbl", set: "Iratha", base: "Heavy Belt" },
 //            { name: "Iratha's Collar", code: "amu", set: "Iratha" },
             // Isenhart's Armory
             { name: "Isenhart's Horns", code: "fhl", set: "Isenhart", base: "Full Helm" },
