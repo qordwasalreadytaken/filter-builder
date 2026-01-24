@@ -6188,6 +6188,17 @@
             let scrollLines = ''; // Store scroll lines to add at end
             utilityItems.forEach(item => {
                 const state = filterState.utility[item.code];
+                if (item.code === 'gold') {
+                    if (state.show) {
+                        filter += 'ItemDisplay[GOLD>2500]: %NAME%\n';
+                        filter += 'ItemDisplay[GOLD<100 CLVL<20]:\n';
+                        filter += 'ItemDisplay[GOLD<250 (CLVL>19 AND CLVL<=65)]:\n';
+                        filter += 'ItemDisplay[GOLD<2500 CLVL>65]:\n';
+                    } else {
+                        filter += 'ItemDisplay[gold]:\n';
+                    }
+                    return;
+                }
                 if (state.show) {
                     // Special handling for scrolls with "only show when low" option
                     if (state.onlyShowWhenLow && (item.code === 'tsc' || item.code === 'isc')) {
@@ -6198,29 +6209,24 @@
                         scrollLines += `ItemDisplay[${item.code}]: ${displayName}\n`;
                         return; // Skip normal processing
                     }
-                    
                     // Generate filter level condition if enabled
                     const filtLvlCondition = generateFilterLevelCondition(state.filterLevels);
                     let line = `ItemDisplay[${item.code}${filtLvlCondition}]:`;
-                    
                     // Only add colors if custom colors are enabled
                     if (state.useCustomColors && state.fontColor !== 'WHITE') {
                         line += ` %${state.fontColor}%`;
                     }
-                    
                     const displayName = state.useCustomName && state.customName ? state.customName : '%NAME%';
                     if (state.biggerClickbox) {
                         line += ` %NL%       ${displayName}       %NL%%NL%`;
                     } else {
                         line += ` ${displayName}`;
                     }
-                    
                     // Add style reference for border/background/notification if needed
                     if (state.useCustomColors || state.chatNotification) {
                         const needsBorder = state.useCustomColors && state.borderColor !== null;
                         const needsBackground = state.useCustomColors && state.backgroundColor !== null;
                         const needsNotification = state.chatNotification;
-                        
                         if (needsBorder || needsBackground || needsNotification) {
                             const rgbParts = [];
                             if (needsNotification) {
@@ -6238,7 +6244,6 @@
                             line += ` <:CustomDisplay: ${rgbParts.join(', ')}>`;
                         }
                     }
-                    
                     filter += line + '\n';
                 } else {
                     filter += `ItemDisplay[${item.code}]:\n`;

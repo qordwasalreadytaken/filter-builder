@@ -11,14 +11,14 @@
             { name: "Full Rejuvenation Potion", code: "rvl", category: "potion" },
             { name: "Rejuvenation Potion", code: "rvs", category: "potion" },
             { name: "Super Healing Potion", code: "hp5", category: "potion" },
-            { name: "Greater Healing Potion", code: "hp4", category: "potion" },
-            { name: "Healing Potion", code: "hp3", category: "potion" },
-            { name: "Lesser Healing Potion", code: "hp2", category: "potion" },
-            { name: "Minor Healing Potion", code: "hp1", category: "potion" },
             { name: "Super Mana Potion", code: "mp5", category: "potion" },
+            { name: "Greater Healing Potion", code: "hp4", category: "potion" },
             { name: "Greater Mana Potion", code: "mp4", category: "potion" },
+            { name: "Healing Potion", code: "hp3", category: "potion" },
             { name: "Mana Potion", code: "mp3", category: "potion" },
+            { name: "Lesser Healing Potion", code: "hp2", category: "potion" },
             { name: "Lesser Mana Potion", code: "mp2", category: "potion" },
+            { name: "Minor Healing Potion", code: "hp1", category: "potion" },
             { name: "Minor Mana Potion", code: "mp1", category: "potion" },
             { name: "Antidote Potion", code: "yps", category: "potion" },
             { name: "Thawing Potion", code: "wms", category: "potion" },
@@ -28,6 +28,7 @@
             { name: "Scroll of Town Portal", code: "tsc", category: "scroll" },
             { name: "Scroll of Identify", code: "isc", category: "scroll" },
             { name: "Key", code: "key", category: "key" },
+            { name: "Gold", code: "gold", category: "gold" },
         ];
 
         const runeItems = [
