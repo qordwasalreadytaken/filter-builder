@@ -8795,7 +8795,20 @@
                     edFilter
                 });
             } else if (isUnique) {
-                updateUniqueItemState(code, baseState);
+                // Find the correct category for this unique item code
+                let uniqueCategory = null;
+                if (eliteWeapons && eliteWeapons.find(i => i.code === code)) uniqueCategory = 'eliteWeapons';
+                else if (eliteArmor && eliteArmor.find(i => i.code === code)) uniqueCategory = 'eliteArmor';
+                else if (excWeapons && excWeapons.find(i => i.code === code)) uniqueCategory = 'excWeapons';
+                else if (excArmor && excArmor.find(i => i.code === code)) uniqueCategory = 'excArmor';
+                else if (normWeapons && normWeapons.find(i => i.code === code)) uniqueCategory = 'normWeapons';
+                else if (normArmor && normArmor.find(i => i.code === code)) uniqueCategory = 'normArmor';
+                else if (classSpecificUniques && classSpecificUniques.find(i => i.code === code)) uniqueCategory = 'classUniques';
+                else if (jewelryAndCharms && jewelryAndCharms.find(i => i.code === code)) uniqueCategory = 'jewelryCharms';
+                if (uniqueCategory) {
+                    if (!filterState[uniqueCategory]) filterState[uniqueCategory] = {};
+                    filterState[uniqueCategory][code] = { ...baseState };
+                }
             } else if (isSet) {
                 updateSetItemState(code, baseState);
             } else if (rarity) {
