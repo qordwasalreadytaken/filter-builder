@@ -2345,6 +2345,7 @@
         return;
     }
     console.log('[loadCommunityModulesUI] window.communityModules:', window.communityModules);
+    console.log('[loadCommunityModulesUI] filterState.communityModules:', JSON.stringify(filterState.communityModules));
     Object.entries(window.communityModules).forEach(([moduleName, rules]) => {
         const modDiv = document.createElement('div');
         modDiv.className = 'community-module-section';
@@ -2353,6 +2354,8 @@
         rules.forEach(rule => {
             const ruleId = `${moduleName}__${rule.id}`;
             const checked = filterState.communityModules?.[moduleName]?.[rule.id] ? 'checked' : '';
+            const customName = filterState.communityModulesCustomNames?.[moduleName]?.[rule.id] || '';
+            console.log(`[loadCommunityModulesUI] Checkbox for ${moduleName} / ${rule.id}:`, checked, 'raw:', filterState.communityModules?.[moduleName]?.[rule.id], 'customName:', customName);
             const safeModuleName = moduleName.replace(/'/g, "\\'");
             const safeRuleId = rule.id.replace(/'/g, "\\'");
             const ruleDiv = document.createElement('div');
@@ -2360,14 +2363,36 @@
             ruleDiv.style.marginBottom = '6px';
             ruleDiv.innerHTML = `
                 <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
-                    <input type="checkbox" ${checked} onchange="toggleCommunityModuleRule('${safeModuleName}','${safeRuleId}',this.checked)">
+                    <input type="checkbox" onchange="toggleCommunityModuleRule('${safeModuleName}','${safeRuleId}',this.checked)">
                     <span style="font-size:13px;color:#fff;">${rule.label}</span>
                     <span style="font-size:11px;color:#aaa;">by ${rule.author || moduleName}</span>
                 </label>
                 <div style="font-size:11px;color:#999;margin-left:24px;">${rule.description || ''}</div>
+                <div style="margin-left:24px;margin-top:2px;">
+                    <input type="text" style="font-size:12px;padding:2px 6px;width:220px;background:#222;color:#fff;border:1px solid #444;border-radius:3px;" placeholder="Custom name (optional)" value="${customName.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}" oninput="updateCommunityModuleCustomName('${safeModuleName}','${safeRuleId}',this.value)">
+                </div>
             `;
             modDiv.appendChild(ruleDiv);
+            // Set the .checked property explicitly after adding to DOM
+            setTimeout(() => {
+                const checkboxes = ruleDiv.getElementsByTagName('input');
+                if (checkboxes.length > 0) {
+                    const checkedVal = !!filterState.communityModules?.[moduleName]?.[rule.id];
+                    checkboxes[0].checked = checkedVal;
+                    console.log(`[UI] Set checkbox for ${moduleName} / ${rule.id} to`, checkedVal, 'from', filterState.communityModules?.[moduleName]?.[rule.id]);
+                } else {
+                    console.log(`[UI] No checkbox found for ${moduleName} / ${rule.id}`);
+                }
+            }, 0);
         });
+                // Update custom name for a community module rule
+                window.updateCommunityModuleCustomName = function(moduleName, ruleId, value) {
+                    if (!filterState.communityModulesCustomNames) filterState.communityModulesCustomNames = {};
+                    if (!filterState.communityModulesCustomNames[moduleName]) filterState.communityModulesCustomNames[moduleName] = {};
+                    filterState.communityModulesCustomNames[moduleName][ruleId] = value;
+                    // Optionally, update filter output or UI as needed
+                    if (typeof generateFilter === 'function') generateFilter();
+                };
         container.appendChild(modDiv);
     });
         }
@@ -3278,6 +3303,14 @@
 
         // Helper to find item code from key for different categories
         function findItemCodeByKey(category, key, items) {
+            if (!items) {
+                console.warn(`findItemCodeByKey: items array is undefined for category '${category}', key:`, key);
+                return null;
+            }
+            if (typeof key !== 'string') {
+                console.warn(`findItemCodeByKey: key is not a string for category '${category}':`, key);
+                return null;
+            }
             const item = items.find(i => {
                 const itemKey = (category === 'highSets' || category === 'midSets' || category === 'lowSets') 
                     ? i.code + '_' + i.set
@@ -4111,7 +4144,7 @@
 
         // Generic NMAG runeword bases rendering function
         function renderNmagItems(items, stateCategory, containerId, countId) {
-            console.log('[renderNmagItems] stateCategory:', stateCategory, 'containerId:', containerId, 'items count:', items.length);
+//            console.log('[renderNmagItems] stateCategory:', stateCategory, 'containerId:', containerId, 'items count:', items.length);
             const container = document.getElementById(containerId);
             if (!container) {
                 console.error('[renderNmagItems] Container not found:', containerId);
@@ -4300,7 +4333,7 @@
 
         // Class skill render functions
         function renderNmagAmazonSkillsItems() {
-            console.log('[renderNmagAmazonSkillsItems] Called with nmagAmazonSkills:', nmagAmazonSkills);
+//            console.log('[renderNmagAmazonSkillsItems] Called with nmagAmazonSkills:', nmagAmazonSkills);
             renderNmagItems(nmagAmazonSkills, 'nmagAmazonSkills', 'nmag-amazon-skills-items', 'nmag-amazon-skills-count');
         }
 
@@ -4386,12 +4419,9 @@
 
         // Helper functions for unique items
         function updateUniqueItemState(category, key, field, value) {
-            // Safety check
-            if (!filterState[category] || !filterState[category][key]) {
-                console.error(`Cannot update state: ${category}.${key} does not exist`);
-                return;
-            }
-            
+            // Ensure filterState[category] and filterState[category][key] are initialized
+            if (!filterState[category]) filterState[category] = {};
+            if (!filterState[category][key]) filterState[category][key] = {};
             filterState[category][key][field] = value;
             
             if (category === 'jewelryCharms') {
@@ -4512,7 +4542,10 @@
 
         // Update set item state and re-render
         function updateSetItemState(category, key, field, value, index = null) {
+            if (!filterState[category]) filterState[category] = {};
+            if (!filterState[category][key]) filterState[category][key] = {};
             if (index !== null) {
+                if (!Array.isArray(filterState[category][key][field])) filterState[category][key][field] = [];
                 filterState[category][key][field][index] = value;
             } else {
                 filterState[category][key][field] = value;
@@ -4723,8 +4756,21 @@
         }
 
         // State update functions for magic/rare items
+        // Wrapper for legacy import compatibility
+        function updateRareMagicItemState(category, key, state) {
+            // The import logic calls this with (code, rarity, state), but updateMagicRareItemState expects (category, key, field, value, index)
+            // We'll assume 'state' is an object of fields to set
+            if (!filterState[category]) filterState[category] = {};
+            if (!filterState[category][key]) filterState[category][key] = {};
+            for (const field in state) {
+                filterState[category][key][field] = state[field];
+            }
+        }
         function updateMagicRareItemState(category, key, field, value, index = null) {
+            if (!filterState[category]) filterState[category] = {};
+            if (!filterState[category][key]) filterState[category][key] = {};
             if (index !== null) {
+                if (!Array.isArray(filterState[category][key][field])) filterState[category][key][field] = [];
                 filterState[category][key][field][index] = value;
             } else {
                 filterState[category][key][field] = value;
@@ -4748,7 +4794,7 @@
             generateFilter();
             
             // Extract code from key format "code_index"
-            const code = key.split('_')[0];
+            const code = (typeof key === 'string' && key.includes('_')) ? key.split('_')[0] : key;
             const prefix = category.startsWith('magic') ? 'MAG' : 'RARE';
             if (code) setTimeout(() => highlightItemInOutput(code, prefix), 100);
         }
@@ -4770,7 +4816,7 @@
             }
             generateFilter();
             
-            const code = key.split('_')[0];
+            const code = (typeof key === 'string' && key.includes('_')) ? key.split('_')[0] : key;
             const prefix = category.startsWith('magic') ? 'MAG' : 'RARE';
             if (code) setTimeout(() => highlightItemInOutput(code, prefix), 100);
         }
@@ -4792,7 +4838,7 @@
             }
             generateFilter();
             
-            const code = key.split('_')[0];
+            const code = (typeof key === 'string' && key.includes('_')) ? key.split('_')[0] : key;
             const prefix = category.startsWith('magic') ? 'MAG' : 'RARE';
             if (code) setTimeout(() => highlightItemInOutput(code, prefix), 100);
         }
@@ -4816,7 +4862,7 @@
             }
             generateFilter();
             
-            const code = key.split('_')[0];
+            const code = (typeof key === 'string' && key.includes('_')) ? key.split('_')[0] : key;
             const prefix = category.startsWith('magic') ? 'MAG' : 'RARE';
             if (code) setTimeout(() => highlightItemInOutput(code, prefix), 100);
         }
@@ -4912,13 +4958,15 @@
 
         // State update functions for NMAG items
         function updateNmagItemState(category, key, field, value, index = null) {
-            console.log('[updateNmagItemState] category:', category, 'key:', key, 'field:', field, 'value:', value);
+            // Ensure filterState[category] and filterState[category][key] are initialized
+            if (!filterState[category]) filterState[category] = {};
+            if (!filterState[category][key]) filterState[category][key] = {};
             if (index !== null) {
+                if (!Array.isArray(filterState[category][key][field])) filterState[category][key][field] = [];
                 filterState[category][key][field][index] = value;
             } else {
                 filterState[category][key][field] = value;
             }
-            console.log('[updateNmagItemState] Updated state:', filterState[category][key]);
 
             // Re-render the appropriate section
             const renderMap = {
@@ -4952,7 +5000,7 @@
             if (renderMap[category]) renderMap[category]();
             generateFilter();
             
-            const code = key.split('_')[0];
+            const code = (typeof key === 'string' && key.includes('_')) ? key.split('_')[0] : key;
             // Class skill sections don't use NMAG prefix in ItemDisplay lines
             const classSkillCategories = ['nmagAmazonSkills', 'nmagPaladinSkills', 'nmagSorceressSkills', 'nmagDruidSkills', 'nmagBarbarianSkills', 'nmagNecromancerSkills', 'nmagAssassinSkills'];
             const isClassSkillItem = classSkillCategories.includes(category);
@@ -4971,7 +5019,7 @@
             }
             generateFilter();
             
-            const code = key.split('_')[0];
+            const code = (typeof key === 'string' && key.includes('_')) ? key.split('_')[0] : key;
             if (code) setTimeout(() => highlightItemInOutput(code, 'NMAG'), 100);
         }
 
@@ -5025,7 +5073,7 @@
             if (renderMap[category]) renderMap[category]();
             generateFilter();
             
-            const code = key.split('_')[0];
+            const code = (typeof key === 'string' && key.includes('_')) ? key.split('_')[0] : key;
             if (code) setTimeout(() => highlightItemInOutput(code, 'NMAG'), 100);
         }
 
@@ -5086,7 +5134,7 @@
             if (renderMap[category]) renderMap[category]();
             generateFilter();
             
-            const code = key.split('_')[0];
+            const code = (typeof key === 'string' && key.includes('_')) ? key.split('_')[0] : key;
             if (code) setTimeout(() => highlightItemInOutput(code, 'NMAG'), 100);
         }
 
@@ -5149,7 +5197,7 @@
             if (renderMap[category]) renderMap[category]();
             generateFilter();
             
-            const code = key.split('_')[0];
+            const code = (typeof key === 'string' && key.includes('_')) ? key.split('_')[0] : key;
             if (code) setTimeout(() => highlightItemInOutput(code, 'NMAG'), 100);
         }
 
@@ -5963,14 +6011,14 @@
                 }
             }
             
-            console.log(`generateClassSkillSection for ${classKey}:`, {
-                hasSelectedItems,
-                hasSelectedSkills,
-                selectedSkills: globalSettings.selectedSkills,
-                selectedSkillGroups: globalSettings.selectedSkillGroups,
-                stateCategory,
-                itemArrayLength: itemArray.length
-            });
+//            console.log(`generateClassSkillSection for ${classKey}:`, {
+//                hasSelectedItems,
+//                hasSelectedSkills,
+//                selectedSkills: globalSettings.selectedSkills,
+//                selectedSkillGroups: globalSettings.selectedSkillGroups,
+//                stateCategory,
+//                itemArrayLength: itemArray.length
+//            });
             
             // Check if any resistances are selected (for Paladin)
             const hasSelectedResistances = showResistances && 
@@ -6318,16 +6366,30 @@
                 Object.entries(window.communityModules).forEach(([moduleName, rules]) => {
                     rules.forEach(rule => {
                         if (filterState.communityModules[moduleName] && filterState.communityModules[moduleName][rule.id]) {
-                            // Add each filter line from the rule
+                            // Add each filter line from the rule, substituting custom name if present
                             rule.filterLines.forEach(line => {
-                                customSectionLines += line + '\n';
+                                // Only substitute for ItemDisplay lines
+                                let newLine = line;
+                                const itemDisplayMatch = line.match(/^(\s*ItemDisplay\[[^\]]*\]:)(.*)$/i);
+                                if (itemDisplayMatch) {
+                                    // Find custom name for this module/rule
+                                    let customName = '';
+                                    if (filterState.communityModulesCustomNames && filterState.communityModulesCustomNames[moduleName] && filterState.communityModulesCustomNames[moduleName][rule.id]) {
+                                        customName = filterState.communityModulesCustomNames[moduleName][rule.id];
+                                    }
+                                    if (customName && customName.trim() && customName.trim() !== '%NAME%') {
+                                        // Replace the right-hand side with the custom name
+                                        newLine = itemDisplayMatch[1] + ' ' + customName.trim();
+                                    }
+                                }
+                                customSectionLines += newLine + '\n';
                             });
                         }
                     });
                 });
             }
             if (customSectionLines) {
-                filter += '// === CUSTOM (COMMUNITY MODULES) ===\n\n' + customSectionLines + '\n';
+                filter += '// === CUSTOM (COMMUNITY MODULES) ===\n' + customSectionLines + '\n';
             }
 
             // Utility items
@@ -7047,6 +7109,9 @@
                 filter += 'ItemDisplay[]: %NAME%\n';
             }
 
+            // WARNING: This function always regenerates and overwrites the filter-output textarea,
+            // so any manual or imported lines (such as //COMMUNITY_MODULES) will be lost unless
+            // they are handled in the generation logic itself.
             console.log('[generateFilter] Filter length:', filter.length, 'chars');
             console.log('[generateFilter] Updating DOM element...');
             document.getElementById('filter-output').value = filter;
@@ -7869,7 +7934,10 @@
                 </label>
             `;
             if (state.useCustomName) {
-                const customName = state.customName || '';
+                // Always use the latest value from state, so after import it is shown
+                const customName = (filterState[category] && filterState[category][itemKey] && typeof filterState[category][itemKey].customName === 'string')
+                    ? filterState[category][itemKey].customName
+                    : '';
                 html += '<div style="margin-top: 10px;">';
                 html += '<label style="display: block; margin-bottom: 5px; color: #888;">Custom display name:</label>';
                 html += `<input type="text" class="modal-text-input" value="${customName}" 
@@ -8228,7 +8296,7 @@
             
             if (magicRareCategoriesMap[category]) {
                 // For magic/rare items, the key is code_index, so extract the code
-                const code = itemKey.includes('_') ? itemKey.split('_')[0] : itemKey;
+                const code = (typeof itemKey === 'string' && itemKey.includes('_')) ? itemKey.split('_')[0] : itemKey;
                 return magicRareCategoriesMap[category].find(item => item.code === code);
             }
             
@@ -8260,20 +8328,43 @@
 
         // Export filter
         function exportFilter() {
-            const output = document.getElementById('filter-output').value;
+            let output = document.getElementById('filter-output').value;
+
+            // Remove any existing //COMMUNITY_MODULES section to avoid duplicates
+            output = output.replace(/\n?\/\/COMMUNITY_MODULES:({[\s\S]*?})\n?/g, '');
+
+            // Always append the COMMUNITY_MODULES section at the end
+            let communityModulesSection = '';
+            if (filterState.communityModules && Object.keys(filterState.communityModules).length > 0) {
+                communityModulesSection = '\n//COMMUNITY_MODULES:' + JSON.stringify(filterState.communityModules) + '\n';
+            } else {
+                // Still add the section for consistency, even if empty
+                communityModulesSection = '\n//COMMUNITY_MODULES:{}\n';
+            }
+
+            // Ensure custom filter lines (// === CUSTOM ...) remain above the utility section
+            // Find the utility section
+            const utilitySectionRegex = /^(.*?)(^\/\/ === UTILITY.*)$/ms;
+            const match = output.match(utilitySectionRegex);
+            if (match) {
+                // Insert the community modules section at the very end, after everything
+                output = match[1] + match[2];
+            }
+            // Append the community modules section at the end (after all content)
+            output = output.replace(/\n?\/\/COMMUNITY_MODULES:({[\s\S]*?})\n?/g, ''); // Remove any stray ones again
+            output = output.replace(/\n+$/, ''); // Remove trailing newlines
+            output += communityModulesSection;
+
             const blob = new Blob([output], { type: 'text/plain' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            
             // Check if surprise me is enabled
             const surpriseMe = document.getElementById('surprise-me')?.checked || false;
             let filename = 'FPCustom';
-            
             if (surpriseMe) {
                 filename = addRandomColors(filename);
             }
-            
             a.download = filename + '.filter';
             document.body.appendChild(a);
             a.click();
@@ -8296,24 +8387,195 @@
 
         // Import filter
         function importFilter(event) {
+            console.log('[IMPORT] importFilter called');
             const file = event.target.files[0];
             if (!file) return;
-
             const reader = new FileReader();
             reader.onload = function(e) {
                 const content = e.target.result;
-                document.getElementById('filter-output').value = content;
-                
-                // Parse and update state
+                // DEBUG: Custom section regex test - BEGIN
+                console.log('[IMPORT] DEBUG: Custom section regex test - BEGIN');
                 try {
-                    parseFilterAndUpdateState(content);
-                    alert('Filter imported successfully! All settings have been loaded.');
-                } catch (error) {
-                    console.error('Import error:', error);
-                    alert('Filter imported but could not fully parse: ' + error.message);
+                    // Updated regex: require a newline after the header, then capture everything up to the next section header or end of file
+                    const customSectionRegex = /^\s*\/\/ === CUSTOM \(COMMUNITY MODULES\) ===\s*\n([\s\S]*?)(?=^\s*\/\/ ===|$)/m;
+                    let customSectionMatch = content.match(customSectionRegex);
+                    if (!customSectionMatch) {
+                        // Fallback: match header and everything after, even if on the same line (legacy)
+                        const fallbackRegex = /\/\/ === CUSTOM \(COMMUNITY MODULES\) ===([\s\S]*?)(?=^\s*\/\/ ===|$)/m;
+                        const fallbackMatch = content.match(fallbackRegex);
+                        if (fallbackMatch) {
+                            customSectionMatch = fallbackMatch;
+                            console.log('[IMPORT] Fallback customSectionMatch: MATCHED', fallbackMatch);
+                        }
+                    }
+                    console.log('[IMPORT] customSectionRegex (final):', customSectionRegex);
+                    console.log('[IMPORT] First 1000 chars of content:', content.slice(0, 1000));
+                    if (customSectionMatch) {
+                        console.log('[IMPORT] customSectionMatch: MATCHED', customSectionMatch);
+                    } else {
+                        console.log('[IMPORT] customSectionMatch: NOT MATCHED');
+                        const idx = content.indexOf('// === CUSTOM (COMMUNITY MODULES) ===');
+                        if (idx !== -1) {
+                            console.log('[IMPORT] Content after CUSTOM header (500 chars):', content.slice(idx, idx + 500));
+                        } else {
+                            console.log('[IMPORT] CUSTOM header not found in content.');
+                        }
+                    }
+                } catch (e) {
+                    console.error('[IMPORT] Exception during custom section regex debug:', e);
                 }
-                
-                updateOutputStats();
+                console.log('[IMPORT] DEBUG: Custom section regex test - END');
+
+                // WARNING: Setting filter-output.value here will be immediately overwritten by generateFilter()
+                // if it is called after import. Any custom or trailing lines (such as //COMMUNITY_MODULES)
+                // will be lost unless they are handled in the state and generation logic.
+                document.getElementById('filter-output').value = content;
+
+                // Wait for window.communityModules to be loaded before restoring state and UI
+                const waitForModules = (cb) => {
+                    console.log('[IMPORT] waitForModules check:', window.communityModules);
+                    if (window.communityModules && Object.keys(window.communityModules).length > 0) {
+                        console.log('[IMPORT] waitForModules: modules loaded, running callback');
+                        cb();
+                    } else {
+                        setTimeout(() => waitForModules(cb), 50);
+                    }
+                };
+                waitForModules(() => {
+                    try {
+                        // --- BEGIN LOGGING AND PARSING ---
+                        console.log('[IMPORT] --- Begin Import ---');
+                        console.log('[IMPORT] First 500 chars of content:', content.slice(0, 500));
+                        // Extract communityModules state from special comment section if present
+                        let cmMatch = content.match(/\/\/COMMUNITY_MODULES:({[\s\S]*?})/);
+                        let parsedCommunityModules = false;
+                        if (cmMatch) {
+                            try {
+                                const cmObj = JSON.parse(cmMatch[1]);
+                                filterState.communityModules = cmObj;
+                                parsedCommunityModules = true;
+                                console.log('[IMPORT] Parsed COMMUNITY_MODULES section:', cmObj);
+                            } catch (e) {
+                                console.warn('Failed to parse COMMUNITY_MODULES:', e);
+                            }
+                        }
+                        // Always attempt to extract and process the custom section, regardless of above
+                        // Updated regex: capture everything after the header up to the next section header or end of file, including blank lines
+                        const customSectionRegex = /^\s*\/\/ === CUSTOM \(COMMUNITY MODULES\) ===[ \t]*\n([\s\S]*?)(?=^\s*\/\/ ===|\Z)/m;
+                        const customSectionMatch = content.match(customSectionRegex);
+                        console.log('[IMPORT] customSectionRegex (final):', customSectionRegex);
+                        console.log('[IMPORT] First 1000 chars of content:', content.slice(0, 1000));
+                        if (customSectionMatch && window.communityModules) {
+                            console.log('[IMPORT] customSectionMatch: MATCHED', customSectionMatch);
+                            console.log('[IMPORT] customSectionMatch[1] (raw section):', customSectionMatch[1]);
+                            const rawSection = customSectionMatch[1];
+                            const splitLines = rawSection.split('\n');
+                            console.log('[IMPORT] splitLines:', splitLines);
+                            let lines = splitLines.map(l => l.trim()).filter(l => l.startsWith('ItemDisplay['));
+                            console.log('[IMPORT] Filtered ItemDisplay lines:', lines);
+                            if (lines.length === 0) {
+                                console.log('[IMPORT] No ItemDisplay lines found in custom section!');
+                            }
+                            // Parse ItemDisplay lines into {lhs, rhs, raw}
+                            const parseItemDisplay = s => {
+                                const m = s.match(/^(ItemDisplay\[[^\]]+\]):?(.*)$/);
+                                return m ? { lhs: m[1].trim(), rhs: m[2].trim(), raw: s } : { lhs: '', rhs: '', raw: s };
+                            };
+                            const parsedLines = lines.map(parseItemDisplay);
+                            // Normalize lines for robust comparison, ignore trailing colons and whitespace
+                            const normalize = s => s.replace(/\s+/g, ' ').replace(/\r/g, '').replace(/:$/, '').trim();
+                            const normLines = parsedLines.map(pl => normalize(pl.lhs + (pl.rhs ? ':' + pl.rhs : '')));
+                            console.log('[IMPORT] Normalized lines:', normLines);
+                            parsedLines.forEach((pl, idx) => {
+                                console.log(`[IMPORT] parsedLines[${idx}]: lhs='${pl.lhs}', rhs='${pl.rhs}', raw='${pl.raw}'`);
+                            });
+                            if (!filterState.communityModules) filterState.communityModules = {};
+                            Object.entries(window.communityModules).forEach(([moduleName, rules]) => {
+                                console.log(`[IMPORT] Module: ${moduleName}, rules array:`, rules);
+                                rules.forEach(rule => {
+                                    console.log(`[IMPORT] Module: ${moduleName}, full rule object:`, rule);
+                                    if (Array.isArray(rule.filterLines) && rule.filterLines.length > 0) {
+                                        rule.filterLines.forEach((fl, ridx) => {
+                                            const trimmed = normalize(fl);
+                                            console.log(`[IMPORT] rule.filterLines[${ridx}]: '${trimmed}' char codes:`, Array.from(trimmed).map(c => c.charCodeAt(0)));
+                                        });
+                                        let matched = false;
+                                        let customName = null;
+                                        for (const fl of rule.filterLines) {
+                                            const trimmed = normalize(fl);
+                                            // 1. Exact match
+                                            let matchIdx = normLines.findIndex(line => line === trimmed);
+                                            // 2. Fallback: match if normLines contains just the left-hand side (up to colon)
+                                            if (matchIdx === -1) {
+                                                const lhs = trimmed.split(':')[0];
+                                                matchIdx = parsedLines.findIndex(pl => normalize(pl.lhs) === lhs);
+                                                if (matchIdx !== -1) {
+                                                    console.log(`[IMPORT] Fallback match: found LHS '${lhs}' in parsedLines for rule '${trimmed}'`);
+                                                }
+                                            }
+                                            // 3. Fallback: match if any normLine is a prefix of the rule's filterLine
+                                            if (matchIdx === -1) {
+                                                matchIdx = normLines.findIndex(line => trimmed.startsWith(line));
+                                                if (matchIdx !== -1) {
+                                                    console.log(`[IMPORT] Prefix match: normLine is prefix of rule.filterLine '${trimmed}'`);
+                                                }
+                                            }
+                                            if (matchIdx !== -1) {
+                                                if (!filterState.communityModules[moduleName]) filterState.communityModules[moduleName] = {};
+                                                filterState.communityModules[moduleName][rule.id] = true;
+                                                // Extract and store custom name/text if present
+                                                const pl = parsedLines[matchIdx];
+                                                if (pl && pl.rhs && pl.rhs !== '%NAME%') {
+                                                    if (!filterState.communityModulesCustomNames) filterState.communityModulesCustomNames = {};
+                                                    if (!filterState.communityModulesCustomNames[moduleName]) filterState.communityModulesCustomNames[moduleName] = {};
+                                                    filterState.communityModulesCustomNames[moduleName][rule.id] = pl.rhs;
+                                                    console.log(`[IMPORT] Stored custom name for ${moduleName} / ${rule.id}: '${pl.rhs}'`);
+                                                }
+                                                console.log(`[IMPORT] Matched rule: ${moduleName} / ${rule.id} by filterLine: '${trimmed}'`);
+                                                matched = true;
+                                                break;
+                                            }
+                                        }
+                                        if (!matched) {
+                                            console.log(`[IMPORT] No match for rule: ${moduleName} / ${rule.id}`);
+                                        }
+                                    } else {
+                                        console.log(`[IMPORT] Rule ${rule.id} in module ${moduleName} has no filterLines or filterLines is not an array.`);
+                                    }
+                                });
+                            });
+                            console.log('[IMPORT] filterState.communityModules after matching:', JSON.stringify(filterState.communityModules));
+                            if (filterState.communityModulesCustomNames) {
+                                console.log('[IMPORT] filterState.communityModulesCustomNames:', JSON.stringify(filterState.communityModulesCustomNames));
+                            }
+                        } else {
+                            if (!customSectionMatch) {
+                                console.log('[IMPORT] CUSTOM (COMMUNITY MODULES) section regex did not match.');
+                            }
+                            if (!window.communityModules) {
+                                console.log('[IMPORT] window.communityModules is not loaded.');
+                            }
+                        }
+                        // Always initialize to empty object if still undefined
+                        if (!filterState.communityModules) filterState.communityModules = {};
+                        // Log the final state before UI rebuild
+                        console.log('[IMPORT] Final filterState.communityModules:', JSON.stringify(filterState.communityModules));
+                        console.log('[IMPORT] window.communityModules keys:', Object.keys(window.communityModules));
+                        Object.entries(window.communityModules).forEach(([moduleName, rules]) => {
+                            console.log(`[IMPORT] Module: ${moduleName}, Rule IDs:`, rules.map(r => r.id));
+                        });
+                        // --- END LOGGING AND PARSING ---
+                        if (typeof loadCommunityModulesUI === 'function') loadCommunityModulesUI(); // Force UI update for checkboxes
+                        parseFilterAndUpdateState(content);
+                        if (typeof generateFilter === 'function') setTimeout(generateFilter, 0);
+                        alert('Filter imported successfully! All settings have been loaded.');
+                        updateOutputStats();
+                    } catch (error) {
+                        console.error('Import error:', error);
+                        alert('Filter imported but could not fully parse: ' + error.message);
+                        updateOutputStats();
+                    }
+                });
             };
             reader.readAsText(file);
         }
@@ -8463,11 +8725,14 @@
                     biggerClickbox = true;
                 }
                 
-                // Check for custom name (anything that's not %NAME%, %ILVL%, color codes, or special syntax)
-                const hasCustomName = display && !display.match(/^\s*%[A-Z_]+%\s*%NAME%/) && !display.includes('%NAME%');
-                if (hasCustomName && !hidden) {
+                // Custom name extraction for regular items
+                // If display is not "%NAME%" and not empty, treat as custom name
+                if (!display.includes('%NAME%') && !hidden) {
                     useCustomName = true;
-                    // Extract custom name - this is complex, so we'll just flag it for now
+                    customName = display.trim();
+                } else {
+                    useCustomName = false;
+                    customName = '';
                 }
                 
                 // Parse CustomDisplay - only this should trigger useCustomColors automatically
@@ -8575,43 +8840,51 @@
             
             // Check utility items
             const utilItem = utilityItems.find(i => i.code === code);
-            if (utilItem && filterState.utility[code]) {
+            if (utilItem) {
+                if (!filterState.utility) filterState.utility = {};
+                if (!filterState.utility[code]) filterState.utility[code] = {};
                 defaultColor = 'WHITE';
                 stateKey = code;
                 stateCategory = 'utility';
             }
-            
+
             // Check runes
             const runeItem = runeItems.find(i => i.code === code);
-            if (runeItem && filterState.runes[code]) {
+            if (runeItem) {
+                if (!filterState.runes) filterState.runes = {};
+                if (!filterState.runes[code]) filterState.runes[code] = {};
                 defaultColor = 'ORANGE';
                 stateKey = code;
                 stateCategory = 'runes';
             }
-            
+
             // Check gems
             const gemItem = gemItems.find(i => i.code === code);
-            if (gemItem && filterState.gems[code]) {
+            if (gemItem) {
+                if (!filterState.gems) filterState.gems = {};
+                if (!filterState.gems[code]) filterState.gems[code] = {};
                 defaultColor = 'WHITE';
                 stateKey = code;
                 stateCategory = 'gems';
             }
-            
+
             // Check misc
             const miscItem = miscItems.find(i => i.code === code);
-            if (miscItem && filterState.misc[code]) {
+            if (miscItem) {
+                if (!filterState.misc) filterState.misc = {};
+                if (!filterState.misc[code]) filterState.misc[code] = {};
                 defaultColor = 'PURPLE';
                 stateKey = code;
                 stateCategory = 'misc';
             }
-            
+
             if (stateKey && stateCategory) {
                 // Only set useCustomColors if fontColor differs from default OR has borders/backgrounds
                 const actualUseCustomColors = 
                     (state.fontColor && state.fontColor !== defaultColor) ||
                     state.borderColor !== null ||
                     state.backgroundColor !== null;
-                    
+
                 Object.assign(filterState[stateCategory][stateKey], {
                     ...state,
                     useCustomColors: actualUseCustomColors

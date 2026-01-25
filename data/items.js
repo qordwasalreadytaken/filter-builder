@@ -517,7 +517,7 @@
             { name: "Immortal King's Detail", code: "zhb", set: "IK", base: "War Belt" },
             { name: "Immortal King's Forge", code: "xhg", set: "IK", base: "War Gauntlets" },
             { name: "Immortal King's Pillar", code: "xhb", set: "IK", base: "War Boots" },
-            { name: "Immortal King's Stone Crusher", code: "2ha", set: "IK", base:"Ogre Maul" },
+            { name: "Immortal King's Stone Crusher", code: "7m7", set: "IK", base:"Ogre Maul" },
             // Tal Rasha's (Sorceress)
             { name: "Tal Rasha's Horadric Crest", code: "xsk", set: "TR", base: "Death Mask" },
             { name: "Tal Rasha's Guardianship", code: "uth", set: "TR", base: "Lacquered Plate" },
@@ -633,7 +633,7 @@
             { name: "Cleglaw's Pincers", code: "mgl", set: "Cleglaw", base: "Chain Gloves" },
             // Death's Disguise
             { name: "Death's Touch", code: "lsd", set: "Death", base: "Long Sword" },
-            { name: "Death's Guard", code: "hbl", set: "Death", base: "Sash" },
+            { name: "Death's Guard", code: "lbl", set: "Death", base: "Sash" },
             { name: "Death's Hand", code: "lgl", set: "Death", base: "Leather Gloves" },
             // Hsarus' Defense
             { name: "Hsarus' Iron Heel", code: "mbt", set: "Hsarus", base: "Chain Boots" },
