@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -990,6 +991,11 @@
         .utility-btn:hover {
             background: #454545;
         }
+
+        #enhanced-import-menu, #enhanced-import-menu * {
+            pointer-events: auto;
+        }
+
     </style>
 </head>
 <body>
@@ -2025,7 +2031,7 @@
                         <div class="output-actions">
                                 <!-- Enhanced Import Filter Dropdown -->
                                 <div style="display: inline-block; position: relative;">
-                                    <button class="btn" id="enhanced-import-btn" onclick="toggleEnhancedImportMenu(event)">Import ▼</button>
+                                    <button class="btn" id="enhanced-import-btn">Import ▼</button>
                                     <div id="enhanced-import-menu" style="display:none; position:absolute; top:100%; left:0; background:#222; border:1px solid #444; z-index:1000; padding:12px; min-width:260px; border-radius:6px; box-shadow:0 2px 8px #000a;">
                                         <div style="margin-bottom:8px;">
                                             <label for="import-source">Source:</label>
@@ -2073,18 +2079,7 @@
                                 <button class="btn btn-primary" onclick="exportFilter()">Export</button>
                                 <button class="btn" onclick="copyToClipboard()">Copy</button>
                         </div>
-                        <script>
-                        function toggleEnhancedImportMenu(e) {
-                            e.stopPropagation();
-                            const menu = document.getElementById('enhanced-import-menu');
-                            menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
-                            document.addEventListener('click', closeEnhancedImportMenu, { once: true });
-                        }
-                        function closeEnhancedImportMenu() {
-                            const menu = document.getElementById('enhanced-import-menu');
-                            menu.style.display = 'none';
-                        }
-                        </script>
+                        <!-- Removed old toggleEnhancedImportMenu logic; robust JS now handles dropdown -->
                     </div>
                     <textarea class="output-textarea" id="filter-output" 
                         placeholder="Your filter will appear here... You can edit it manually."></textarea>
@@ -2107,6 +2102,85 @@
 
     <!-- Dynamic loader for community modules -->
     <script>
+    // --- Modular Import Logic for .filter files ---
+    // Helper: Parse .filter text into sections (simple header-based split)
+    function parseFilterSections(filterText) {
+        // Example: section headers start with ">>> Section Name" or similar
+        // Adjust this regex to match your actual export format
+        const sectionRegex = /^>>>\s*(.+)$/gm;
+        let match, lastIndex = 0, sections = [], sectionNames = [], sectionMap = {};
+        let matches = [...filterText.matchAll(sectionRegex)];
+        if (matches.length === 0) {
+            // No headers found, treat as single section
+            return [{ name: 'All', content: filterText }];
+        }
+        for (let i = 0; i < matches.length; i++) {
+            const name = matches[i][1].trim();
+            const start = matches[i].index;
+            const end = (i + 1 < matches.length) ? matches[i + 1].index : filterText.length;
+            const content = filterText.slice(start, end).trim();
+            sections.push({ name, content });
+            sectionNames.push(name);
+            sectionMap[name] = content;
+        }
+        return sections;
+    }
+
+    // When file is picked, parse and populate section list
+    document.getElementById('local-file').addEventListener('change', function (e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function (evt) {
+            const text = evt.target.result;
+            const sections = parseFilterSections(text);
+            // Populate the sections dropdown
+            const select = document.getElementById('filter-sections');
+            select.innerHTML = '';
+            select.appendChild(new Option('All Sections', 'all'));
+            sections.forEach(sec => {
+                select.appendChild(new Option(sec.name, sec.name));
+            });
+            // Store for import
+            select._filterFileSections = sections;
+            select._filterFileText = text;
+        };
+        reader.readAsText(file);
+    });
+
+    // Enhanced importFilter: import only selected sections
+    async function importFilter(event) {
+        if (event && event.preventDefault) event.preventDefault();
+        // Do not use event.target anywhere in this function
+        const source = document.getElementById('import-source').value;
+        let filterText = '';
+        let sections = [];
+        if (source === 'local') {
+            const select = document.getElementById('filter-sections');
+            const fileSections = select._filterFileSections;
+            const fileText = select._filterFileText;
+            if (!fileSections || !fileText) {
+                alert('Please select a file and wait for it to load.');
+                return;
+            }
+            const selected = Array.from(select.selectedOptions).map(opt => opt.value);
+            if (selected.includes('all')) {
+                filterText = fileText;
+            } else {
+                // Concatenate only selected sections
+                filterText = fileSections.filter(sec => selected.includes(sec.name)).map(sec => sec.content).join('\n\n');
+            }
+        } else if (source === 'url') {
+            // (Optional: implement URL fetch logic here)
+            alert('URL import not yet implemented.');
+            return;
+        }
+        // Use existing logic to update the filter viewport
+        parseFilterAndUpdateState(filterText);
+        // Optionally, close the menu after import
+        document.getElementById('enhanced-import-menu').style.display = 'none';
+    }
+
     // Loads community modules from index.json and each module JSON
     async function loadCommunityModulesFromJSON() {
         const basePath = 'data/community_modules/';
@@ -5559,8 +5633,8 @@
 
             // Filter Start
             filter += '// === Default of never hiding runewords or identified items ===\n\n';
-//            filter += 'ItemDisplay[RW]: %NAME%\n';
-//            filter += 'ItemDisplay[ID]: %NAME%\n\n';
+            filter += 'ItemDisplay[RW]: %NAME%\n';
+            filter += 'ItemDisplay[ID]: %NAME%\n\n';
 
             // --- COMMUNITY MODULES CUSTOM SECTION ---
             let customSectionLines = '';
@@ -5598,6 +5672,7 @@
             filter += '// === UTILITY ITEMS ===\n\n';
             let scrollLines = ''; // Store scroll lines to add at end
             utilityItems.forEach(item => {
+                filter += `// ${item.name} (${item.code})\n`;
                 const state = filterState.utility[item.code];
                 if (item.code === 'gold') {
                     if (state.show) {
@@ -5664,6 +5739,7 @@
             // Runes
             filter += '\n// === RUNES ===\n\n';
             runeItems.forEach(item => {
+                filter += `// ${item.name} (${item.code})\n`;
                 const state = filterState.runes[item.code];
                 if (state.show) {
                     // Generate filter level condition if enabled
@@ -5715,6 +5791,7 @@
             // Gems
             filter += '\n// === GEMS ===\n\n';
             gemItems.forEach(item => {
+                filter += `// ${item.name} (${item.code})\n`;
                 const state = filterState.gems[item.code];
                 if (state.show) {
                     // Generate filter level condition if enabled
@@ -5766,6 +5843,7 @@
             // PoD/Misc Items
             filter += '\n// === POD/Keys/Maps/MISC ITEMS ===\n\n';
             miscItems.forEach(item => {
+                filter += `// ${item.name} (${item.code})\n`;
                 // Add special items before QUEST
                 if (item.code === 'QUEST') {
                     filter += 'ItemDisplay[hst OR msf]: %TAN%%NAME% {%NAME% %DGREEN%[Circle]                [Circle&Crescent]%NL%[Crescent]             [Triangle]%NL%[Square]     [Arrows]%NL%[Star]%NL%%ORANGE%DURIEL TOMB ORDER:} //%NOTIFY(GOLD)%\n';
@@ -5829,13 +5907,14 @@
                 let hasItems = false;
                 
                 items.forEach(item => {
+//                    line += `// ${item.name} (${item.code})\n`;
                     const key = item.name.replace(/[^a-zA-Z0-9]/g, '_');
                     const state = filterState[stateCategory][key];
                     if (state.show) {
                         hasItems = true;
                         // Generate filter level condition if enabled
                         const filtLvlCondition = generateFilterLevelCondition(state.filterLevels);
-                        let line = `ItemDisplay[UNI ${item.code}${filtLvlCondition} !ID]:`;
+                        let line = `// ${item.name} (${item.code})\n ItemDisplay[UNI ${item.code}${filtLvlCondition} !ID]:`;
                         
                         // Only add colors if custom colors are enabled
                         if (state.useCustomColors && state.fontColor !== 'GOLD') {
@@ -5875,7 +5954,7 @@
                         
                         lines += line + '\n';
                     } else {
-                        lines += `ItemDisplay[UNI ${item.code}]:\n`;
+                        lines += `// ${item.name} (${item.code})\n ItemDisplay[UNI ${item.code}]:\n`;
                     }
                 });
                 
@@ -5894,7 +5973,7 @@
                         hasItems = true;
                         // Generate filter level condition if enabled
                         const filtLvlCondition = generateFilterLevelCondition(state.filterLevels);
-                        let line = `ItemDisplay[SET ${item.code}${filtLvlCondition} !ID]:`;
+                        let line = `// ${item.name} (${item.code})\n ItemDisplay[SET ${item.code}${filtLvlCondition} !ID]:`;
                         
                         // Only add colors if custom colors are enabled
                         if (state.useCustomColors && state.fontColor !== 'GREEN') {
@@ -5934,7 +6013,7 @@
                         
                         lines += line + '\n';
                     } else {
-                        lines += `ItemDisplay[SET ${item.code}]:\n`;
+                        lines += `// ${item.name} (${item.code})\n ItemDisplay[SET ${item.code}]:\n`;
                     }
                 });
                 
@@ -6038,11 +6117,12 @@
                 items.forEach((item, idx) => {
                     const key = item.code + '_' + idx;
                     const state = filterState[stateCategory][key];
+                    lines += `\t// ${item.name} (${item.code})\n`;
                     if (state.show) {
                         hasItems = true;
                         
                         // Add comment with item name and code for debugging
-                        lines += `\t// ${item.name} (${item.code})\n`;
+//                        lines += `\t// ${item.name} (${item.code})\n`;
                         
                         // Generate filter level condition if enabled
                         const filtLvlCondition = generateFilterLevelCondition(state.filterLevels);
@@ -8294,40 +8374,36 @@
         document.getElementById('url-import').style.display = source === 'url' ? 'block' : 'none';
     }
 
-    function importFilter() {
-        const source = document.getElementById('import-source').value;
-        const sections = Array.from(document.getElementById('filter-sections').selectedOptions).map(option => option.value);
+        // Robust enhanced import dropdown logic
+        document.addEventListener('DOMContentLoaded', function () {
+            const menu = document.getElementById('enhanced-import-menu');
+            const btn = document.getElementById('enhanced-import-btn');
+            if (!menu || !btn) return;
 
-        if (source === 'local') {
-            const fileInput = document.getElementById('local-file');
-            if (fileInput.files.length === 0) {
-                alert('Please select a file to import.');
-                return;
-            }
-            const file = fileInput.files[0];
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                const data = JSON.parse(event.target.result);
-                processImportedData(data, sections);
-            };
-            reader.readAsText(file);
-        } else if (source === 'url') {
-            const url = document.getElementById('import-url').value;
-            if (!url) {
-                alert('Please enter a URL to import.');
-                return;
-            }
-            fetch(url)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok');
-                    }
-                    return response.json();
-                })
-                .then(data => processImportedData(data, sections))
-                .catch(error => alert('Failed to fetch filter: ' + error.message));
-        }
-    }
+            // Toggle menu on button click
+            btn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                menu.style.display = (menu.style.display === 'block') ? 'none' : 'block';
+            });
+
+            // Prevent menu from closing when clicking inside
+            menu.addEventListener('click', function (e) {
+                e.stopPropagation();
+            });
+
+            // Close menu on outside click
+            document.addEventListener('click', function () {
+                menu.style.display = 'none';
+            });
+
+            // Close menu on Escape key
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape') {
+                    menu.style.display = 'none';
+                }
+            });
+        });
+
 
     function processImportedData(data, sections) {
         if (sections.includes('all')) {
