@@ -512,7 +512,7 @@
             { name: "Set Amulets", code: "amu", set: "" },
             { name: "Set Rings", code: "rin", set: "" },
             // Immortal King's (Barbarian)
-            { name: "Immortal King's Will", code: "ba5", set: "IK", base: "Avenger Guard" },
+            { name: "Immortal King's Will", code: "ba5", set: "IK", base: "Avenger Guard", req_level:47, req_strength:65 },
             { name: "Immortal King's Soul Cage", code: "uar", set: "IK", base: "Sacred Armor" },
             { name: "Immortal King's Detail", code: "zhb", set: "IK", base: "War Belt" },
             { name: "Immortal King's Forge", code: "xhg", set: "IK", base: "War Gauntlets" },
@@ -703,7 +703,7 @@
         const magicCraftingBases = [
             { name: "Arrows", code: "aq2", minIlvl: 85, desc: "Crafting Base" },
             { name: "Bolts", code: "cq2", minIlvl: 85, desc: "Crafting Base" },
-            { name: "Vampirebone Gloves", code: "uvg", minIlvl: 85, desc: "Crafting Base" },
+            { name: "Vampirebone Gloves", code: "uvg", minIlvl: 85, desc: "Crafting Base", req_level:47, req_strength:50 },
             { name: "Sharkskin Gloves", code: "xvg", minIlvl: 85, desc: "Crafting Base" },
             { name: "Bramble Mitts", code: "ulg", minIlvl: 85, desc: "Crafting Base" },
             { name: "Chain Gloves", code: "mgl", minIlvl: 85, desc: "Crafting Base" },
@@ -1169,19 +1169,19 @@
         // EQ2
         const nmagArmor = [
             // Elite
-            { name: "Archon Plate", code: "utp", quality: "elite", max_sockets: 4, socketTier: "premium" },
-            { name: "Balrog Skin", code: "upl", quality: "elite", max_sockets: 4 },
-            { name: "Boneweave", code: "uhn", quality: "elite", max_sockets: 4 },
-            { name: "Diamond Mail", code: "ung", quality: "elite", max_sockets: 4 },
-            { name: "Dusk Shroud", code: "uui", quality: "elite", max_sockets: 4, socketTier: "premium" },
+            { name: "Archon Plate", code: "utp", quality: "elite", max_sockets: 4, socketTier: "premium", req_strength:103, req_level:63, },
+            { name: "Balrog Skin", code: "upl", quality: "elite", max_sockets: 4, req_strength:165, req_level:57, movepenalty:5 },
+            { name: "Boneweave", code: "uhn", quality: "elite", max_sockets: 4, req_strength:158, req_level:47, movepenalty:5 },
+            { name: "Diamond Mail", code: "ung", quality: "elite", max_sockets: 4, req_strength:131, req_level:54, movepenalty:5 },
+            { name: "Dusk Shroud", code: "uui", quality: "elite", max_sockets: 4, req_strength:77, req_level:49, socketTier: "premium" },
             { name: "Great Hauberk", code: "urs", quality: "elite", max_sockets: 4 },
-            { name: "Hellforge Plate", code: "ult", quality: "elite", max_sockets: 4 },
-            { name: "Kraken Shell", code: "uld", quality: "elite", max_sockets: 4 },
-            { name: "Lacquered Plate", code: "uth", quality: "elite", max_sockets: 4 },
-            { name: "Loricated Mail", code: "ucl", quality: "elite", max_sockets: 4 },
-            { name: "Sacred Armor", code: "uar", quality: "elite", max_sockets: 4 },
+            { name: "Hellforge Plate", code: "ult", quality: "elite", max_sockets: 4, movepenalty:10 },
+            { name: "Kraken Shell", code: "uld", quality: "elite", max_sockets: 4, movepenalty:5 },
+            { name: "Lacquered Plate", code: "uth", quality: "elite", max_sockets: 4, movepenalty:5 },
+            { name: "Loricated Mail", code: "ucl", quality: "elite", max_sockets: 4, movepenalty:10 },
+            { name: "Sacred Armor", code: "uar", quality: "elite", max_sockets: 4, movepenalty:5 },
             { name: "Scarab Husk", code: "ula", quality: "elite", max_sockets: 4 },
-            { name: "Shadow Plate", code: "uul", quality: "elite", max_sockets: 4 },
+            { name: "Shadow Plate", code: "uul", quality: "elite", max_sockets: 4, movepenalty:5 },
             { name: "Wire Fleece", code: "utu", quality: "elite", max_sockets: 4 },
             { name: "Wyrmhide", code: "uea", quality: "elite", max_sockets: 4 },
             // Exceptional
