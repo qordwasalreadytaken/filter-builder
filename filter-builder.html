@@ -1007,6 +1007,13 @@
             <div style="text-align: center; margin-top: 10px;">
                 <a href="filter-builder-about.html" style="color: #4fc3f7; text-decoration: none; font-size: 14px;" target="_blank">ℹ️ About & Help</a>
             </div>
+        <!-- Legacy Import UI (can be commented out if not needed) -->
+        <div id="legacy-import-container" style="margin: 20px 0; padding: 12px; border: 1px solid #555; background: #181818; border-radius: 8px;">
+            <h4 style="margin: 0 0 8px 0; color: #f5c542;">Legacy Import (The one that works)</h4>
+            <input type="file" id="legacy-import-file" accept=".filter,.txt,.json" style="display:none;" onchange="importLegacyFilter(event)" />
+            <button onclick="document.getElementById('legacy-import-file').click();" style="margin-left: 8px;">Choose File & Import (Legacy)</button>
+            <div style="font-size: 12px; color: #aaa; margin-top: 4px;">This will overwrite all filter settings. Use only for full filter file imports.</div>
+        </div>
  <!--           <div style="text-align: right; ">
                 <label title="Surprise only applies to exported filters">
                     <input type="checkbox" id="surprise-me" onchange="toggleSurpriseMe(this.checked)">
@@ -2027,11 +2034,11 @@
             <div class="output-panel">
                 <div class="output-section">
                     <div class="output-header">
-                        <span class="output-title">Filter Output</span>
+                        <span class="output-title">Filter Output </span>
                         <div class="output-actions">
                                 <!-- Enhanced Import Filter Dropdown -->
                                 <div style="display: inline-block; position: relative;">
-                                    <button class="btn" id="enhanced-import-btn">Import ▼</button>
+                                    <button class="btn" id="enhanced-import-btn">Custom Import Alpha ▼</button>
                                     <div id="enhanced-import-menu" style="display:none; position:absolute; top:100%; left:0; background:#222; border:1px solid #444; z-index:1000; padding:12px; min-width:260px; border-radius:6px; box-shadow:0 2px 8px #000a;">
                                         <div style="margin-bottom:8px;">
                                             <label for="import-source">Source:</label>
@@ -2041,10 +2048,12 @@
                                             </select>
                                         </div>
                                         <div id="local-import" class="import-method" style="margin-bottom:8px;">
-                                            <input type="file" id="local-file" accept=".json">
+                                            <label for="local-file" style="display:block; margin-bottom:4px; color:#ccc;">Click here to select a filter to import</label>
+                                            <input type="file" id="local-file" accept=".filter,.txt,.json">
+                                            <div id="import-file-instructions" style="font-size:12px; color:#aaa; margin-top:4px;">Work in progress.</div>
                                         </div>
                                         <div id="url-import" class="import-method" style="display:none; margin-bottom:8px;">
-                                            <input type="url" id="import-url" placeholder="https://example.com/filter.json" style="width:100%;">
+                                            <input type="url" id="import-url" placeholder="https://example.com/filter.filter" style="width:100%;">
                                         </div>
                                         <div style="margin-bottom:8px;">
                                             <label for="filter-sections">Sections:</label>
@@ -2054,7 +2063,7 @@
                                                 <option value="runes-section">Runes</option>
                                                 <option value="gems-section">Gems</option>
                                                 <option value="misc-section">PoD/Keys/Maps/Quest & Misc Items</option>
-                                                <option value="jewelry-charms-section">Unique Jewelry & Charms</option>
+<!--                                                <option value="jewelry-charms-section">Unique Jewelry & Charms</option>
                                                 <option value="class-uniques-section">Class-Specific Unique Items</option>
                                                 <option value="elite-weapons-section">Elite Unique Weapons</option>
                                                 <option value="elite-armor-section">Elite Unique Armor</option>
@@ -2070,8 +2079,9 @@
                                                 <option value="magic-crafting-section">Magic Crafting Bases</option>
                                                 <option value="rare-jewelry-section">Rare Jewelry, Jewels, Misc</option>
                                                 <option value="rare-class-items-section">Rare Class-Specific Items</option>
-                                                <option value="rare-elite-bases-section">Rare Elite Bases</option>
+                                                <option value="rare-elite-bases-section">Rare Elite Bases</option> -->
                                             </select>
+                                            <div id="import-section-instructions" style="font-size:12px; color:#aaa; margin-top:4px;">Select one or more sections to import. Hold Ctrl (Cmd on Mac) to select multiple.</div>
                                         </div>
                                         <button onclick="importFilter()" style="width:100%;">Import</button>
                                     </div>
@@ -2105,23 +2115,17 @@
     // --- Modular Import Logic for .filter files ---
     // Helper: Parse .filter text into sections (simple header-based split)
     function parseFilterSections(filterText) {
-        // Example: section headers start with ">>> Section Name" or similar
-        // Adjust this regex to match your actual export format
-        const sectionRegex = /^>>>\s*(.+)$/gm;
-        let match, lastIndex = 0, sections = [], sectionNames = [], sectionMap = {};
-        let matches = [...filterText.matchAll(sectionRegex)];
-        if (matches.length === 0) {
-            // No headers found, treat as single section
-            return [{ name: 'All', content: filterText }];
-        }
-        for (let i = 0; i < matches.length; i++) {
-            const name = matches[i][1].trim();
-            const start = matches[i].index;
-            const end = (i + 1 < matches.length) ? matches[i + 1].index : filterText.length;
-            const content = filterText.slice(start, end).trim();
+        // Matches sections delimited by // === SECTION NAME START=== and // === SECTION NAME STOP===
+        const sectionRegex = /\/\/ === ([A-Z0-9 _-]+) START===([\s\S]*?)\/\/ === \1 STOP===/g;
+        let match, sections = [];
+        while ((match = sectionRegex.exec(filterText)) !== null) {
+            const name = match[1].trim();
+            const content = match[0]; // include the markers in content for easy replacement
             sections.push({ name, content });
-            sectionNames.push(name);
-            sectionMap[name] = content;
+        }
+        if (sections.length === 0) {
+            // No sections found, treat as single section
+            return [{ name: 'All', content: filterText }];
         }
         return sections;
     }
@@ -2150,11 +2154,9 @@
 
     // Enhanced importFilter: import only selected sections
     async function importFilter(event) {
-        if (event && event.preventDefault) event.preventDefault();
-        // Do not use event.target anywhere in this function
+        if (event && typeof event.preventDefault === 'function') event.preventDefault();
         const source = document.getElementById('import-source').value;
         let filterText = '';
-        let sections = [];
         if (source === 'local') {
             const select = document.getElementById('filter-sections');
             const fileSections = select._filterFileSections;
@@ -2165,20 +2167,38 @@
             }
             const selected = Array.from(select.selectedOptions).map(opt => opt.value);
             if (selected.includes('all')) {
+                // Import all sections: parse each section individually for robust state update
+                const sections = fileSections;
+                sections.forEach(sec => {
+                    parseSectionAndUpdateState(sec.name, sec.content);
+                });
                 filterText = fileText;
             } else {
-                // Concatenate only selected sections
-                filterText = fileSections.filter(sec => selected.includes(sec.name)).map(sec => sec.content).join('\n\n');
+                // Only import selected sections
+                let currentText = document.getElementById('filter-output').value;
+                let newSections = fileSections.filter(sec => selected.includes(sec.name));
+                newSections.forEach(sec => {
+                    parseSectionAndUpdateState(sec.name, sec.content);
+                    // Optionally update the output textarea for user feedback
+                    const sectionRegex = new RegExp(`// === ${sec.name} START===([\s\S]*?)// === ${sec.name} STOP===`, 'g');
+                    if (sectionRegex.test(currentText)) {
+                        currentText = currentText.replace(sectionRegex, sec.content);
+                    } else {
+                        currentText += '\n\n' + sec.content;
+                    }
+                });
+                filterText = currentText;
             }
         } else if (source === 'url') {
-            // (Optional: implement URL fetch logic here)
             alert('URL import not yet implemented.');
             return;
         }
-        // Use existing logic to update the filter viewport
-        parseFilterAndUpdateState(filterText);
-        // Optionally, close the menu after import
+        // Update the output textarea for user feedback
+        document.getElementById('filter-output').value = filterText;
         document.getElementById('enhanced-import-menu').style.display = 'none';
+        // Re-render all sections and update stats
+        renderAllSections();
+        updateOutputStats();
     }
 
     // Loads community modules from index.json and each module JSON
@@ -2205,11 +2225,11 @@
         }
     }
     // Load modules before UI
-    window.addEventListener('DOMContentLoaded', function() {
+/*    window.addEventListener('DOMContentLoaded', function() {
         loadCommunityModulesFromJSON().then(() => {
             setTimeout(loadCommunityModulesUI, 100); // UI loader already waits 500ms, but ensure order
         });
-    });
+    }); */
     </script>
 
     <script>
@@ -2231,7 +2251,7 @@
         // Item data arrays loaded from data/items.js
 
         // --- Community Modules UI Logic ---
-        function loadCommunityModulesUI() {
+/*        function loadCommunityModulesUI() {
     const container = document.getElementById('community-modules-container');
     container.innerHTML = '';
     if (!window.communityModules) {
@@ -2290,8 +2310,9 @@
         container.appendChild(modDiv);
     });
         }
+*/
 
-        function toggleCommunityModuleRule(moduleName, ruleId, checked) {
+function toggleCommunityModuleRule(moduleName, ruleId, checked) {
     console.log('[toggleCommunityModuleRule] called with:', { moduleName, ruleId, checked });
     if (!filterState.communityModules) filterState.communityModules = {};
     if (!filterState.communityModules[moduleName]) filterState.communityModules[moduleName] = {};
@@ -4144,9 +4165,9 @@
             renderNmagItems(nmagBarbarianHelms, 'nmagBarbarianHelms', 'nmag-barbarian-helms-items', 'nmag-barbarian-helms-count');
         }
 
-        function renderNmagJavelinsItems() {
-            renderNmagItems(nmagJavelins, 'nmagJavelins', 'nmag-javelins-items', 'nmag-javelins-count');
-        }
+//        function renderNmagJavelinsItems() {
+//            renderNmagItems(nmagJavelins, 'nmagJavelins', 'nmag-javelins-items', 'nmag-javelins-count');
+//        }
 
         // Class skill render functions
         function renderNmagAmazonSkillsItems() {
@@ -4802,7 +4823,7 @@
                 'nmagSorcOrbs': renderNmagSorcOrbsItems,
                 'nmagDaggers': renderNmagDaggersItems,
                 'nmagBarbarianHelms': renderNmagBarbarianHelmsItems,
-                'nmagJavelins': renderNmagJavelinsItems,
+//                'nmagJavelins': renderNmagJavelinsItems,
                 'nmagAmazonWeapons': renderNmagAmazonWeaponsItems,
                 'nmagCirclets': renderNmagCircletsItems
             };
@@ -4838,7 +4859,7 @@
                 'nmagBarbarianSkills': renderNmagBarbarianSkillsItems,
                 'nmagNecromancerSkills': renderNmagNecromancerSkillsItems,
                 'nmagAssassinSkills': renderNmagAssassinSkillsItems,
-                'nmagJavelins': renderNmagJavelinsItems,
+//                'nmagJavelins': renderNmagJavelinsItems,
                 'nmagAmazonWeapons': renderNmagAmazonWeaponsItems,
                 'nmagCirclets': renderNmagCircletsItems
             };
@@ -4876,7 +4897,7 @@
                 'nmagBarbarianSkills': renderNmagBarbarianSkillsItems,
                 'nmagNecromancerSkills': renderNmagNecromancerSkillsItems,
                 'nmagAssassinSkills': renderNmagAssassinSkillsItems,
-                'nmagJavelins': renderNmagJavelinsItems,
+//                'nmagJavelins': renderNmagJavelinsItems,
                 'nmagAmazonWeapons': renderNmagAmazonWeaponsItems,
             };
             if (renderMap[category]) renderMap[category]();
@@ -5249,7 +5270,7 @@
                     filterState.nmagJavelins[key].show = false;
                 }
             });
-            renderNmagJavelinsItems();
+//            renderNmagJavelinsItems();
             generateFilter();
         }
 
@@ -5700,7 +5721,7 @@
             }
 
             // Utility items
-            filter += '// === UTILITY ITEMS ===\n\n';
+            filter += '// === UTILITY ITEMS START===\n';
             let scrollLines = ''; // Store scroll lines to add at end
             utilityItems.forEach(item => {
                 filter += `// ${item.name} (${item.code})\n`;
@@ -5766,9 +5787,10 @@
                     filter += `ItemDisplay[${item.code}]:\n`;
                 }
             });
+            filter += '// === UTILITY ITEMS STOP===\n\n';
 
             // Runes
-            filter += '\n// === RUNES ===\n\n';
+            filter += '\n// === RUNES START===\n';
             runeItems.forEach(item => {
                 filter += `// ${item.name} (${item.code})\n`;
                 const state = filterState.runes[item.code];
@@ -5818,9 +5840,10 @@
                     filter += `ItemDisplay[${item.code}]:\n`;
                 }
             });
+            filter += '\n// === RUNES STOP===\n\n';
 
             // Gems
-            filter += '\n// === GEMS ===\n\n';
+            filter += '\n// === GEMS START===\n';
             gemItems.forEach(item => {
                 filter += `// ${item.name} (${item.code})\n`;
                 const state = filterState.gems[item.code];
@@ -5870,9 +5893,10 @@
                     filter += `ItemDisplay[${item.code}]:\n`;
                 }
             });
+            filter += '\n// === GEMS STOP===\n\n';
 
             // PoD/Misc Items
-            filter += '\n// === POD/Keys/Maps/MISC ITEMS ===\n\n';
+            filter += '\n// === POD/Keys/Maps/MISC ITEMS START===\n';
             miscItems.forEach(item => {
                 filter += `// ${item.name} (${item.code})\n`;
                 // Add special items before QUEST
@@ -5928,6 +5952,7 @@
                     filter += `ItemDisplay[${item.code}]:\n`;
                 }
             });
+            filter += '\n// === POD/Keys/Maps/MISC ITEMS STOP===\n\n';
 
             // Filter Start
             filter += '\n// === Always show runewords and identified items ===\n';
@@ -5936,7 +5961,7 @@
             filter += 'ItemDisplay[(MAG OR RARE OR SET OR UNI OR CRAFT) ID]: %NAME% %!tansocks!%\n\n';
 
             // === UNIQUE ITEMS ===
-            filter += '\n// === UNIQUE ITEMS ===\n\n';
+//            filter += '\n// === UNIQUE ITEMS START===\n';
             
             // Helper function to generate unique item filter lines
             function generateUniqueItemLines(items, stateCategory, sectionTitle) {
@@ -6300,7 +6325,7 @@
                 
                 return hasItems ? lines + '\n' : '';
             }
-            
+            filter += '\n// === UNIQUE ITEMS START===\n';
             filter += generateUniqueItemLines(jewelryAndCharms, 'jewelryCharms', 'Unique Jewelry & Charms');
             filter += generateUniqueItemLines(classSpecificUniques, 'classUniques', 'Class-Specific Uniques');
             filter += generateUniqueItemLines(eliteUniqueWeapons, 'eliteWeapons', 'Elite Unique Weapons');
@@ -6309,24 +6334,28 @@
             filter += generateUniqueItemLines(exceptionalUniqueArmor, 'excArmor', 'Exceptional Unique Armor');
             filter += generateUniqueItemLines(normalUniqueWeapons, 'normWeapons', 'Normal Unique Weapons');
             filter += generateUniqueItemLines(normalUniqueArmor, 'normArmor', 'Normal Unique Armor');
+            filter += '\n// === UNIQUE ITEMS STOP===\n\n';
 
             // === SET ITEMS ===
-            filter += '\n// === SET ITEMS ===\n\n';
+            filter += '\n// === SET ITEMS START===\n\n';
             filter += generateSetItemLines(highLevelSets, 'highSets', 'High-Level Set Items');
             filter += generateSetItemLines(midLevelSets, 'midSets', 'Mid-Level Set Items');
             filter += generateSetItemLines(lowLevelSets, 'lowSets', 'Low-Level Set Items');
+            filter += '\n// === SET ITEMS STOP===\n\n';
 
             // === MAGIC ITEMS ===
-            filter += '\n// === MAGIC ITEMS ===\n\n';
+            filter += '\n// === MAGIC ITEMS START===\n';
             filter += generateMagicRareItemLines(magicJewelry, 'magicJewelry', 'Magic Jewelry & Jewels', 'MAG');
             filter += generateMagicRareItemLines(magicCharms, 'magicCharms', 'Magic Charms', 'MAG');
             filter += generateMagicRareItemLines(magicCraftingBases, 'magicCrafting', 'Magic Crafting Bases', 'MAG');
+            filter += '\n// === MAGIC ITEMS STOP===\n\n';
 
             // === RARE ITEMS ===
-            filter += '\n// === RARE ITEMS ===\n\n';
+            filter += '\n// === RARE ITEMS START===\n';
             filter += generateMagicRareItemLines(rareJewelry, 'rareJewelry', 'Rare Jewelry & Jewels', 'RARE');
             filter += generateMagicRareItemLines(rareClassItems, 'rareClassItems', 'Rare Class-Specific Items', 'RARE');
             filter += generateMagicRareItemLines(rareEliteBases, 'rareEliteBases', 'Rare Elite Bases', 'RARE');
+            filter += '\n// === RARE ITEMS STOP===\n\n';
 
             // === Defauls "show runewords and identified items" section moved to above uniques ===
 //            filter += '\n// === Always show runewords and identified items ===\n';
@@ -6363,7 +6392,7 @@
             }
 
             // === NMAG RUNEWORD BASES ===
-            filter += '\n// === NMAG RUNEWORD BASES ===\n';
+            filter += '\n// === NMAG RUNEWORD BASES START===\n';
             filter += 'EnableIf[NMAG]\n\n';
             filter += generateNmagItemLines(nmagPolearms, 'nmagPolearms', 'NMAG: Polearms (Insight, Infinity, Obedience)');
             filter += generateNmagItemLines(nmagSwords, 'nmagSwords', 'NMAG: Swords (Spirit, Grief)');
@@ -6380,14 +6409,12 @@
             filter += generateNmagItemLines(nmagSorcOrbs, 'nmagSorcOrbs', 'NMAG: Sorc Orbs (Plague)');
             filter += generateNmagItemLines(nmagDaggers, 'nmagDaggers', 'NMAG: Daggers');
             filter += generateNmagItemLines(nmagBarbarianHelms, 'nmagBarbarianHelms', 'NMAG: Barbarian Helms (Delirium, Dream)');
-            
-            filter += '\n// ===== Other NMAG base items to follow =====\n\n';
-            
+//            filter += '\n// ===== Other NMAG base items to follow =====\n\n';
 //            filter += generateNmagItemLines(nmagJavelins, 'nmagJavelins', 'NMAG Extended: Javelins');
-
             // Close NMAG block
             filter += '\n\tItemDisplay[]: %NAME%\n';
             filter += 'EndIf[]\n';
+            filter += '\n// === NMAG RUNEWORD BASES STOP===\n';
 
             // === FILTER CLOSING ===
             
@@ -6945,7 +6972,7 @@
                 'nmagNecroHeads': renderNmagNecroHeadsItems,
                 'nmagAssassinClaws': renderNmagAssassinClawsItems,
                 'nmagSorcOrbs': renderNmagSorcOrbsItems,
-                'nmagJavelins': renderNmagJavelinsItems,
+//                'nmagJavelins': renderNmagJavelinsItems,
                 'nmagAmazonWeapons': renderNmagAmazonWeaponsItems,
             };
             
@@ -7584,7 +7611,7 @@
         }
 
         // Import filter
-        function importFilter(event) {
+        function importLegacyFilter(event) {
             console.log('[IMPORT] importFilter called');
             const file = event.target.files[0];
             if (!file) return;
@@ -7776,6 +7803,29 @@
                 });
             };
             reader.readAsText(file);
+        }
+
+        // Helper: parse a section and update only the relevant filter state
+        function parseSectionAndUpdateState(sectionName, sectionContent) {
+            // Map section names to state categories and parsing logic
+            const sectionMap = {
+                'UNIQUE ITEMS': () => parseFilterAndUpdateState(sectionContent),
+                'SET ITEMS': () => parseFilterAndUpdateState(sectionContent),
+                'MAGIC ITEMS': () => parseFilterAndUpdateState(sectionContent),
+                'RARE ITEMS': () => parseFilterAndUpdateState(sectionContent),
+                'UTILITY': () => parseFilterAndUpdateState(sectionContent),
+                'RUNES': () => parseFilterAndUpdateState(sectionContent),
+                'GEMS': () => parseFilterAndUpdateState(sectionContent),
+                'MISC': () => parseFilterAndUpdateState(sectionContent),
+                'NMAG RUNEWORD BASES': () => parseFilterAndUpdateState(sectionContent),
+                // Add more mappings as needed
+            };
+            if (sectionMap[sectionName]) {
+                sectionMap[sectionName]();
+            } else {
+                // Default: try to parse as generic ItemDisplay lines
+                parseFilterAndUpdateState(sectionContent);
+            }
         }
 
         function parseFilterAndUpdateState(filterContent) {
@@ -8151,7 +8201,7 @@
             renderNmagSorcOrbsItems();
             renderNmagDaggersItems();
             renderNmagBarbarianHelmsItems();
-            renderNmagJavelinsItems();
+//            renderNmagJavelinsItems();
             renderNmagAmazonWeaponsItems();
             generateFilter();
         }
@@ -8208,7 +8258,7 @@
             renderNmagSorcOrbsItems();
             renderNmagDaggersItems();
             renderNmagBarbarianHelmsItems();
-            renderNmagJavelinsItems();
+//            renderNmagJavelinsItems();
             renderNmagAmazonWeaponsItems();
             generateFilter();
         }
@@ -8284,7 +8334,7 @@
             renderNmagSorcOrbsItems();
             renderNmagDaggersItems();
             renderNmagBarbarianHelmsItems();
-            renderNmagJavelinsItems();
+//            renderNmagJavelinsItems();
             renderNmagAmazonWeaponsItems();
             generateFilter();
         }
