@@ -29,7 +29,7 @@
             { name: "Scroll of Identify", code: "isc", category: "scroll" },
             { name: "Key", code: "key", category: "key" },
             { name: "Gold", code: "gold", category: "gold" },
-            { name: "Gas Potions", code: "gpm OR opm OR opl OR ops OR gps OR gpl", category: "potion" },
+            { name: "Throwing Potions", code: "gpm OR opm OR opl OR ops OR gps OR gpl", category: "potion" },
         ];
 
         const runeItems = [

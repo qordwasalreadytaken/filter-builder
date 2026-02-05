@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -2942,15 +2941,41 @@ function toggleCommunityModuleRule(moduleName, ruleId, checked) {
             container.innerHTML = '';
             
             utilityItems.forEach(item => {
-                const state = filterState.utility[item.code];
+                // Defensive: ensure state exists and has all required properties
+                let state = filterState.utility[item.code];
+                if (!state) {
+                    state = filterState.utility[item.code] = {
+                        show: true,
+                        fontColor: 'WHITE',
+                        borderColor: null,
+                        backgroundColor: null,
+                        filterLevels: [false, false, false, false, false, false, false, false, false, false],
+                        chatNotification: false,
+                        biggerClickbox: false,
+                        customName: '',
+                        useCustomName: false
+                    };
+                } else {
+                    // Patch any missing properties for robustness
+                    if (typeof state.show !== 'boolean') state.show = true;
+                    if (!Array.isArray(state.filterLevels)) state.filterLevels = [false, false, false, false, false, false, false, false, false, false];
+                    if (typeof state.fontColor !== 'string') state.fontColor = 'WHITE';
+                    if (!('borderColor' in state)) state.borderColor = null;
+                    if (!('backgroundColor' in state)) state.backgroundColor = null;
+                    if (typeof state.chatNotification !== 'boolean') state.chatNotification = false;
+                    if (typeof state.biggerClickbox !== 'boolean') state.biggerClickbox = false;
+                    if (typeof state.customName !== 'string') state.customName = '';
+                    if (typeof state.useCustomName !== 'boolean') state.useCustomName = false;
+                }
+
                 const row = document.createElement('div');
                 row.className = 'item-row';
-                
+
                 // Build font color options
                 const fontOptions = FONT_COLORS.map(color => 
                     `<option value="${color}" ${state.fontColor === color ? 'selected' : ''}>${color}</option>`
                 ).join('');
-                
+
                 // Build filter levels checkboxes (only for named levels)
                 const levelCheckboxes = state.filterLevels
                     .map((checked, idx) => {
@@ -2966,9 +2991,9 @@ function toggleCommunityModuleRule(moduleName, ruleId, checked) {
                     })
                     .filter(cb => cb !== null)
                     .join('');
-                
+
                 const isModified = isItemModified(state, 'simple');
-                
+
                 row.innerHTML = `
                     <input type="checkbox" class="item-checkbox" 
                         ${state.show ? 'checked' : ''} 
@@ -7805,9 +7830,42 @@ function toggleCommunityModuleRule(moduleName, ruleId, checked) {
             reader.readAsText(file);
         }
 
+        // Modular section import: clear and update only the relevant filterState and UI for a section
+        function importSectionAndUpdateUI(sectionName, sectionContent) {
+            // Map section names to filterState keys and render functions
+            const sectionMap = {
+                'UTILITY ITEMS': {
+                    stateKey: 'utility',
+                    renderFunc: renderUtilityItems
+                },
+                // Add more mappings for other sections as needed
+            };
+            const mapping = sectionMap[sectionName];
+            if (!mapping) {
+                // Fallback: parse as generic section
+                parseFilterAndUpdateState(sectionContent);
+                return;
+            }
+            // Clear only the relevant filterState property
+            filterState[mapping.stateKey] = {};
+            // Parse the section to repopulate filterState for this section
+            parseFilterAndUpdateState(sectionContent);
+            // Update only the relevant UI section
+            if (typeof mapping.renderFunc === 'function') {
+                mapping.renderFunc();
+            }
+            // Optionally update output stats
+            if (typeof updateOutputStats === 'function') updateOutputStats();
+        }        
+        
         // Helper: parse a section and update only the relevant filter state
         function parseSectionAndUpdateState(sectionName, sectionContent) {
-            // Map section names to state categories and parsing logic
+            // Modular: use importSectionAndUpdateUI for known sections
+            if (sectionName === 'UTILITY ITEMS') {
+                importSectionAndUpdateUI(sectionName, sectionContent);
+                return;
+            }
+            // Legacy/fallback: old mapping for other sections
             const sectionMap = {
                 'UNIQUE ITEMS': () => parseFilterAndUpdateState(sectionContent),
                 'SET ITEMS': () => parseFilterAndUpdateState(sectionContent),
@@ -8018,21 +8076,20 @@ function toggleCommunityModuleRule(moduleName, ruleId, checked) {
                 customName,
                 useCustomName
             };
-            
+
             // Only include fontColor if we actually found one in the display
             if (fontColor !== null) {
                 baseState.fontColor = fontColor;
             }
-            
+
             // Only add useCustomColors if we detected borders/backgrounds
             // The update functions will set it based on whether fontColor differs from default
             if (useCustomColors) {
                 baseState.useCustomColors = true;
             }
-            
-            if (filterLevels) {
-                baseState.filterLevels = filterLevels;
-            }
+
+            // Always set filterLevels: from parsing if present, otherwise default to all false
+            baseState.filterLevels = filterLevels || [false, false, false, false, false, false, false, false, false, false];
             
             // Update filterState based on item type
             if (isNmag) {
