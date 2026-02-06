@@ -7838,6 +7838,14 @@ function toggleCommunityModuleRule(moduleName, ruleId, checked) {
                     stateKey: 'utility',
                     renderFunc: renderUtilityItems
                 },
+                'RUNES': {
+                    stateKey: 'runes',
+                    renderFunc: renderRuneItems
+                },
+                'GEMS': {
+                    stateKey: 'gems',
+                    renderFunc: renderGemsItems
+                },
                 // Add more mappings for other sections as needed
             };
             const mapping = sectionMap[sectionName];
